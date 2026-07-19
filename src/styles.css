@@ -31,6 +31,22 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .album-form input { border: 1px solid #aeb9cc; border-radius: 0.4rem; padding: 0.65rem; }
 
+.photo-set-form { background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; display: grid; gap: 0.75rem; margin: 1.5rem 0; max-width: 42rem; padding: 1rem; }
+
+.photo-set-form > input { border: 1px solid #aeb9cc; border-radius: 0.4rem; padding: 0.65rem; }
+
+.drop-zone-field { display: grid; gap: 0.35rem; }
+
+.drop-zone { align-items: center; background: #f8faff; border: 1px dashed #aeb9cc; border-radius: 0.5rem; cursor: pointer; display: grid; gap: 0.35rem; min-height: 8rem; padding: 1rem; text-align: center; }
+
+.drop-zone:focus, .drop-zone:hover, .drop-zone.drag-over { border-color: #2358d8; box-shadow: 0 0 0 3px rgb(35 88 216 / 0.15); outline: 0; }
+
+.drop-zone-prompt, .drop-zone-file { color: #5d687a; }
+
+.drop-zone-preview { justify-self: center; max-height: 10rem; max-width: 100%; object-fit: contain; }
+
+.visually-hidden { height: 1px; margin: -1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+
 .form-error { color: #b42318; margin: 0; }
 
 .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
