@@ -65,6 +65,16 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .album-card span { color: #2358d8; }
 
+.photo-set-history { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1.5rem; }
+
+.thumbnail-pair { background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; padding: 1rem; }
+
+.thumbnail-pair h3 { margin: 0 0 0.75rem; }
+
+.thumbnail-pair-images { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.thumbnail-pair img { aspect-ratio: 1; border-radius: 0.4rem; object-fit: cover; width: 100%; }
+
 @media (max-width: 36rem) {
   .page-heading { align-items: stretch; flex-direction: column; }
   .page-heading button { width: 100%; }
