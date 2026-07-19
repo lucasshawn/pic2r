@@ -16,6 +16,11 @@ export function PhotoSetForm({ onSave }: PhotoSetFormProps) {
 
   function handleFileChange(field: 'before' | 'after', file: File | null) {
     const fieldError = validatePhotoSet({ name, before: field === 'before' ? file : before, after: field === 'after' ? file : after })[field]
+    if (fieldError) {
+      setErrors((currentErrors) => ({ ...currentErrors, [field]: fieldError }))
+      return
+    }
+
     if (field === 'before') setBefore(file)
     else setAfter(file)
     setErrors((currentErrors) => ({ ...currentErrors, [field]: fieldError }))

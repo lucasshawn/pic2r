@@ -66,3 +66,31 @@ test('shows an error when a dropped file is not an image', async () => {
 
   expect(await screen.findByText('Choose an image file.')).toBeInTheDocument()
 })
+
+test('preserves a selected image when a non-image is chosen from the picker', async () => {
+  const user = userEvent.setup({ applyAccept: false })
+  render(<PhotoSetForm onSave={vi.fn()} />)
+
+  const before = screen.getByLabelText(/^before/i)
+  const validBefore = new File(['before'], 'before.png', { type: 'image/png' })
+  await user.upload(before, validBefore)
+  await user.upload(before, new File(['text'], 'notes.txt', { type: 'text/plain' }))
+
+  expect(await screen.findByText('Choose an image file.')).toBeInTheDocument()
+  expect(screen.getByText('before.png')).toBeInTheDocument()
+})
+
+test('preserves a selected image when a non-image is dropped', async () => {
+  render(<PhotoSetForm onSave={vi.fn()} />)
+
+  const before = screen.getByLabelText(/^before/i)
+  fireEvent.drop(before, {
+    dataTransfer: { files: [new File(['before'], 'before.png', { type: 'image/png' })] },
+  })
+  fireEvent.drop(before, {
+    dataTransfer: { files: [new File(['text'], 'notes.txt', { type: 'text/plain' })] },
+  })
+
+  expect(await screen.findByText('Choose an image file.')).toBeInTheDocument()
+  expect(screen.getByText('before.png')).toBeInTheDocument()
+})
