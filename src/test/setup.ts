@@ -2,11 +2,15 @@ import '@testing-library/jest-dom'
 import 'fake-indexeddb/auto'
 import { afterEach } from 'vitest'
 
-afterEach(async () => {
+export async function deletePictureCatalog(database: IDBFactory = indexedDB) {
   await new Promise<void>((resolve, reject) => {
-    const request = indexedDB.deleteDatabase('picture-catalog')
+    const request = database.deleteDatabase('picture-catalog')
     request.onsuccess = () => resolve()
     request.onerror = () => reject(request.error)
-    request.onblocked = () => resolve()
+    request.onblocked = () => reject(new Error('Deleting picture-catalog was blocked'))
   })
+}
+
+afterEach(async () => {
+  await deletePictureCatalog()
 })
