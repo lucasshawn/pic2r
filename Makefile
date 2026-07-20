@@ -1,6 +1,7 @@
 .PHONY: build run preview
 
 build:
+	npm test -- --run
 	npm run build
 
 run:
