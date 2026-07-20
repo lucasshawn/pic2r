@@ -105,3 +105,21 @@ export async function createPhotoSet(
 
   return photoSet
 }
+
+export async function updatePhotoSet(photoSet: PhotoSet): Promise<PhotoSet> {
+  const database = await openDatabase()
+  const transaction = database.transaction('photoSets', 'readwrite')
+  transaction.objectStore('photoSets').put(photoSet)
+  await transactionComplete(transaction)
+  database.close()
+
+  return photoSet
+}
+
+export async function deletePhotoSet(id: string): Promise<void> {
+  const database = await openDatabase()
+  const transaction = database.transaction('photoSets', 'readwrite')
+  transaction.objectStore('photoSets').delete(id)
+  await transactionComplete(transaction)
+  database.close()
+}
