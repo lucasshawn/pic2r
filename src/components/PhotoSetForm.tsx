@@ -1,34 +1,45 @@
 import { useState, type FormEvent } from 'react'
+import type { PhotoSet } from '../types'
 import { validatePhotoSet } from '../validation'
 import { DropZone } from './DropZone'
 
 interface PhotoSetFormProps {
-  onSave: (name: string, before: File, after: File) => Promise<void>
+  initialPhotoSet?: PhotoSet
+  submitLabel?: string
+  onCancel?: () => void
+  onSave: (name: string, before: File | null, after: File | null) => Promise<void>
 }
 
-export function PhotoSetForm({ onSave }: PhotoSetFormProps) {
-  const [name, setName] = useState('')
+export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', onCancel, onSave }: PhotoSetFormProps) {
+  const [name, setName] = useState(initialPhotoSet?.name ?? '')
   const [before, setBefore] = useState<File | null>(null)
   const [after, setAfter] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState(false)
-  const validation = validatePhotoSet({ name, before, after })
+  const baseValidation = validatePhotoSet({ name, before, after })
+  const validation = {
+    ...baseValidation,
+    ...(initialPhotoSet && !before ? { before: undefined } : {}),
+    ...(initialPhotoSet && !after ? { after: undefined } : {}),
+  }
 
   function handleFileChange(field: 'before' | 'after', file: File | null) {
     const fieldError = validatePhotoSet({ name, before: field === 'before' ? file : before, after: field === 'after' ? file : after })[field]
-    if (fieldError) {
-      setErrors((currentErrors) => ({ ...currentErrors, [field]: fieldError }))
+    const existingImage = field === 'before' ? initialPhotoSet?.before : initialPhotoSet?.after
+    const resolvedFieldError = !file && existingImage ? undefined : fieldError
+    if (resolvedFieldError) {
+      setErrors((currentErrors) => ({ ...currentErrors, [field]: resolvedFieldError }))
       return
     }
 
     if (field === 'before') setBefore(file)
     else setAfter(file)
-    setErrors((currentErrors) => ({ ...currentErrors, [field]: fieldError }))
+    setErrors((currentErrors) => ({ ...currentErrors, [field]: resolvedFieldError }))
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (Object.keys(validation).length > 0 || !before || !after) {
+    if (Object.values(validation).some(Boolean) || (!initialPhotoSet && (!before || !after))) {
       setErrors(validation)
       return
     }
@@ -62,8 +73,9 @@ export function PhotoSetForm({ onSave }: PhotoSetFormProps) {
       <DropZone label="Before" file={before} error={errors.before} onFileChange={(file) => handleFileChange('before', file)} />
       <DropZone label="After" file={after} error={errors.after} onFileChange={(file) => handleFileChange('after', file)} />
       <div className="form-actions">
-        <button type="submit" disabled={isSaving || Object.keys(validation).length > 0}>
-          {isSaving ? 'Saving…' : 'Save photo set'}
+        {onCancel && <button type="button" onClick={onCancel}>Cancel</button>}
+        <button type="submit" disabled={isSaving || Object.values(validation).some(Boolean)}>
+          {isSaving ? 'Saving…' : submitLabel}
         </button>
       </div>
     </form>

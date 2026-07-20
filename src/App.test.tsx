@@ -60,6 +60,70 @@ test('saves a pair and refreshes it into the album history', async () => {
   expect(screen.getByRole('img', { name: /living room 1 after/i })).toBeInTheDocument()
 })
 
+test('cancels an edit without changing the saved set', async () => {
+  const user = userEvent.setup()
+  const album = await createAlbum('Renovation')
+  window.location.hash = `#/albums/${album.id}`
+  render(<App />)
+
+  await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
+  await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
+  await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
+  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await screen.findByRole('heading', { name: 'Living Room 1' })
+
+  await user.click(screen.getByRole('button', { name: /edit living room 1/i }))
+  await user.clear(screen.getByLabelText(/set name/i))
+  await user.type(screen.getByLabelText(/set name/i), 'Changed')
+  await user.click(screen.getByRole('button', { name: /^cancel$/i }))
+
+  expect(screen.getByRole('heading', { name: 'Living Room 1' })).toBeInTheDocument()
+  expect(screen.queryByDisplayValue('Changed')).not.toBeInTheDocument()
+})
+
+test('deletes a set only after confirmation', async () => {
+  const user = userEvent.setup()
+  const album = await createAlbum('Renovation')
+  window.location.hash = `#/albums/${album.id}`
+  render(<App />)
+
+  await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
+  await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
+  await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
+  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await screen.findByRole('heading', { name: 'Living Room 1' })
+
+  await user.click(screen.getByRole('button', { name: /delete living room 1/i }))
+  expect(screen.getByRole('dialog', { name: /delete living room 1/i })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: /cancel/i }))
+  expect(screen.getByRole('heading', { name: 'Living Room 1' })).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: /delete living room 1/i }))
+  await user.click(screen.getByRole('button', { name: /^delete$/i }))
+  expect(await screen.findByText(/no photo sets yet/i)).toBeInTheDocument()
+})
+
+test('saves an edit while retaining unchanged images', async () => {
+  const user = userEvent.setup()
+  const album = await createAlbum('Renovation')
+  window.location.hash = `#/albums/${album.id}`
+  render(<App />)
+
+  await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
+  await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
+  await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
+  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await screen.findByRole('heading', { name: 'Living Room 1' })
+
+  await user.click(screen.getByRole('button', { name: /edit living room 1/i }))
+  await user.clear(screen.getByLabelText(/set name/i))
+  await user.type(screen.getByLabelText(/set name/i), 'Updated Living Room')
+  expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled()
+  await user.click(screen.getByRole('button', { name: /save changes/i }))
+
+  expect(await screen.findByRole('heading', { name: 'Updated Living Room' })).toBeInTheDocument()
+  expect(screen.getAllByRole('img')).toHaveLength(2)
+})
+
 test('enables save only after a name and both image files are selected', async () => {
   const user = userEvent.setup()
   render(<PhotoSetForm onSave={vi.fn()} />)

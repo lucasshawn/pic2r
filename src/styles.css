@@ -75,7 +75,22 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .thumbnail-pair img { aspect-ratio: 1; border-radius: 0.4rem; object-fit: cover; width: 100%; }
 
+.thumbnail-pair-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+.thumbnail-pair-actions button { padding: 0.5rem 0.75rem; }
+
+.thumbnail-pair-actions button:last-child { background: #b42318; }
+
+.delete-dialog { background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; margin-top: 1rem; max-width: 32rem; padding: 1rem; }
+
+.delete-dialog h3 { margin-top: 0; }
+
 @media (max-width: 36rem) {
   .page-heading { align-items: stretch; flex-direction: column; }
   .page-heading button { width: 100%; }
+  .thumbnail-pair-actions { display: grid; grid-template-columns: 1fr; }
+  .thumbnail-pair-actions button { min-height: 44px; width: 100%; }
+  .photo-set-form { max-width: none; }
+  .photo-set-form .drop-zone-field { width: 100%; }
+  .thumbnail-pair-images { grid-template-columns: 1fr; }
 }
