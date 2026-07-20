@@ -14,6 +14,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [saveError, setSaveError] = useState('')
   const [activeEdit, setActiveEdit] = useState<PhotoSet | null>(null)
+  const [isAdding, setIsAdding] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<PhotoSet | null>(null)
 
   async function loadPhotoSets() {
@@ -40,6 +41,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
         setActiveEdit(null)
       } else if (before && after) {
         await createPhotoSet(album.id, name, before, after)
+        setIsAdding(false)
       }
       await loadPhotoSets()
     } catch {
@@ -68,14 +70,17 @@ export function AlbumPage({ album }: AlbumPageProps) {
           <h2 id="album-heading">{album.name}</h2>
           <p>Save before-and-after image pairs to this album.</p>
         </div>
+        {!isAdding && !activeEdit && <button onClick={() => setIsAdding(true)}>+ Add new photo</button>}
       </div>
-      <PhotoSetForm
-        key={activeEdit?.id ?? 'new'}
-        initialPhotoSet={activeEdit ?? undefined}
-        submitLabel={activeEdit ? 'Save changes' : undefined}
-        onCancel={activeEdit ? () => setActiveEdit(null) : undefined}
-        onSave={handleSave}
-      />
+      {(isAdding || activeEdit) && (
+        <PhotoSetForm
+          key={activeEdit?.id ?? 'new'}
+          initialPhotoSet={activeEdit ?? undefined}
+          submitLabel={activeEdit ? 'Save changes' : undefined}
+          onCancel={activeEdit ? () => setActiveEdit(null) : () => setIsAdding(false)}
+          onSave={handleSave}
+        />
+      )}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
       {pendingDelete && (
         <DeletePhotoSetDialog

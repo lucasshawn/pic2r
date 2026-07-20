@@ -38,12 +38,26 @@ test('opens the created album when its card is selected', async () => {
   expect(await screen.findByRole('heading', { name: 'Test', level: 2 })).toBeInTheDocument()
 })
 
+test('shows the new photo form only after selecting add new photo', async () => {
+  const user = userEvent.setup()
+  const album = await createAlbum('Renovation')
+  window.location.hash = `#/albums/${album.id}`
+  render(<App />)
+
+  await screen.findByRole('heading', { name: 'Renovation', level: 2 })
+  expect(screen.queryByLabelText(/set name/i)).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /add new photo/i }))
+  expect(screen.getByLabelText(/set name/i)).toBeInTheDocument()
+})
+
 test('saves a pair and refreshes it into the album history', async () => {
   const user = userEvent.setup()
   const album = await createAlbum('Renovation')
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
+  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(
     screen.getByLabelText(/^before/i),
@@ -66,6 +80,7 @@ test('cancels an edit without changing the saved set', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
+  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
@@ -87,6 +102,7 @@ test('deletes a set only after confirmation', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
+  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
@@ -108,6 +124,7 @@ test('saves an edit while retaining unchanged images', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
+  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
