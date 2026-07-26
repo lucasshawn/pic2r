@@ -5,6 +5,12 @@ const memoryAlbums: Album[] = []
 const memoryPhotoSets: Map<string, PhotoSet[]> = new Map()
 const photoSetAlbumMap: Map<string, string> = new Map()
 
+export function resetMemoryCatalog(): void {
+  memoryAlbums.length = 0
+  memoryPhotoSets.clear()
+  photoSetAlbumMap.clear()
+}
+
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T | null> {
   try {
     const res = await fetch(url, options)

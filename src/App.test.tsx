@@ -1,8 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from './App'
-import { createAlbum } from './catalogRepository'
+import { createAlbum, resetMemoryCatalog } from './catalogRepository'
 import { PhotoSetForm } from './components/PhotoSetForm'
+
+beforeEach(() => {
+  window.location.hash = ''
+  resetMemoryCatalog()
+})
 
 test('renders the picture catalog heading', async () => {
   render(<App />)
