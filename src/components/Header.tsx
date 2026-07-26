@@ -17,32 +17,49 @@ declare global {
 export function Header() {
   const { user, isAdmin, mockDevLogin, loginWithGoogleCredential, logout } = useAuth()
   const [devEmail, setDevEmail] = useState('')
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-    if (typeof window !== 'undefined' && window.google?.accounts?.id && clientId) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response: any) => {
-            if (response?.credential) {
-              loginWithGoogleCredential(response.credential)
-            }
-          },
-        })
-        const btnParent = document.getElementById('google-signin-btn')
-        if (btnParent) {
-          window.google.accounts.id.renderButton(btnParent, {
-            theme: 'outline',
-            size: 'large',
-            type: 'standard',
+    if (!clientId || typeof window === 'undefined') return
+
+    function renderGoogleBtn() {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: (response: any) => {
+              if (response?.credential) {
+                loginWithGoogleCredential(response.credential)
+              }
+            },
           })
+          const btnParent = document.getElementById('google-signin-btn')
+          if (btnParent) {
+            btnParent.innerHTML = ''
+            window.google.accounts.id.renderButton(btnParent, {
+              theme: 'outline',
+              size: 'large',
+              type: 'standard',
+            })
+          }
+        } catch (e) {
+          console.error('Failed to initialize Google Sign-In:', e)
         }
-      } catch (e) {
-        console.error('Failed to initialize Google Sign-In:', e)
       }
     }
-  }, [loginWithGoogleCredential])
+
+    if (window.google?.accounts?.id) {
+      renderGoogleBtn()
+    } else {
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval)
+          renderGoogleBtn()
+        }
+      }, 100)
+      return () => clearInterval(interval)
+    }
+  }, [clientId, loginWithGoogleCredential])
 
   const handleDevSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +68,9 @@ export function Header() {
       setDevEmail('')
     }
   }
+
+  // Show dev login fallback only if VITE_GOOGLE_CLIENT_ID is not set or in dev mode without clientId
+  const showDevSection = !clientId || import.meta.env.DEV
 
   return (
     <header className="app-header">
@@ -74,35 +94,37 @@ export function Header() {
         ) : (
           <div className="login-controls">
             <div id="google-signin-btn" className="google-signin-container"></div>
-            <div className="dev-login-section">
-              <span className="dev-login-label">Dev:</span>
-              <button
-                type="button"
-                className="dev-login-btn"
-                onClick={() => mockDevLogin('admin@example.com', 'Dev Admin')}
-              >
-                Dev Admin Login
-              </button>
-              <button
-                type="button"
-                className="dev-login-btn"
-                onClick={() => mockDevLogin('user@example.com', 'Dev Reader')}
-              >
-                Dev Reader Login
-              </button>
-              <form onSubmit={handleDevSubmit} className="dev-login-form">
-                <input
-                  type="email"
-                  placeholder="Enter dev email..."
-                  value={devEmail}
-                  onChange={(e) => setDevEmail(e.target.value)}
-                  className="dev-login-input"
-                />
-                <button type="submit" className="dev-login-submit">
-                  Login
+            {showDevSection && !clientId && (
+              <div className="dev-login-section">
+                <span className="dev-login-label">Dev:</span>
+                <button
+                  type="button"
+                  className="dev-login-btn"
+                  onClick={() => mockDevLogin('admin@example.com', 'Dev Admin')}
+                >
+                  Dev Admin Login
                 </button>
-              </form>
-            </div>
+                <button
+                  type="button"
+                  className="dev-login-btn"
+                  onClick={() => mockDevLogin('user@example.com', 'Dev Reader')}
+                >
+                  Dev Reader Login
+                </button>
+                <form onSubmit={handleDevSubmit} className="dev-login-form">
+                  <input
+                    type="email"
+                    placeholder="Enter dev email..."
+                    value={devEmail}
+                    onChange={(e) => setDevEmail(e.target.value)}
+                    className="dev-login-input"
+                  />
+                  <button type="submit" className="dev-login-submit">
+                    Login
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         )}
       </div>
