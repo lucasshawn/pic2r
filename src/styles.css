@@ -85,6 +85,137 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .delete-dialog h3 { margin-top: 0; }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #d9dfeb;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #172033;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fff;
+  border: 1px solid #d9dfeb;
+  border-radius: 2rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+}
+
+.user-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #172033;
+}
+
+.role-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.role-admin {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.role-readonly {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.signout-button {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 1.5rem;
+}
+
+.signout-button:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.login-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dev-login-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+}
+
+.dev-login-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.dev-login-btn {
+  background: #e2e8f0;
+  color: #334155;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+
+}
+
+.dev-login-btn:hover {
+  background: #cbd5e1;
+}
+
+.dev-login-form {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dev-login-input {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.35rem;
+}
+
+.dev-login-submit {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  background: #2358d8;
+  color: #fff;
+}
+
 @media (max-width: 36rem) {
   .page-heading { align-items: stretch; flex-direction: column; }
   .page-heading button { width: 100%; }
@@ -93,4 +224,5 @@ button:disabled { cursor: wait; opacity: 0.65; }
   .photo-set-form { max-width: none; }
   .photo-set-form .drop-zone-field { width: 100%; }
   .thumbnail-pair-images { grid-template-columns: 1fr; }
+  .app-header { flex-direction: column; align-items: flex-start; }
 }
