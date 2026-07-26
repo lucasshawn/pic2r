@@ -8,7 +8,7 @@ import {
   generatePresignedPutUrl,
   getBucketName,
   getPublicDomain,
-} from './r2Client'
+} from '../../netlify/functions/r2Client'
 import { sendMock } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 

@@ -1,8 +1,8 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
-import { handler } from './api'
-import * as r2 from './r2Client'
+import { handler } from '../../netlify/functions/api'
+import * as r2 from '../../netlify/functions/r2Client'
 
-vi.mock('./r2Client', () => ({
+vi.mock('../../netlify/functions/r2Client', () => ({
   getR2Json: vi.fn(),
   putR2Json: vi.fn(),
   deleteR2Objects: vi.fn(),

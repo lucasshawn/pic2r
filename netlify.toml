@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+  ignored_function_patterns = ["*.test.ts", "*.test.js"]
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
