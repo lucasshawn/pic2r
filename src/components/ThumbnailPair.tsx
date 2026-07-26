@@ -11,13 +11,34 @@ export function ThumbnailPair({ photoSet, onEdit, onDelete }: ThumbnailPairProps
   const [urls, setUrls] = useState<{ before: string; after: string } | null>(null)
 
   useEffect(() => {
-    const before = URL.createObjectURL(photoSet.before)
-    const after = URL.createObjectURL(photoSet.after)
-    setUrls({ before, after })
+    let beforeUrl = ''
+    let afterUrl = ''
+    let createdBeforeObj = false
+    let createdAfterObj = false
+
+    if (typeof photoSet.before === 'string') {
+      beforeUrl = photoSet.before
+    } else if (photoSet.beforeUrl) {
+      beforeUrl = photoSet.beforeUrl
+    } else if (photoSet.before instanceof Blob) {
+      beforeUrl = URL.createObjectURL(photoSet.before)
+      createdBeforeObj = true
+    }
+
+    if (typeof photoSet.after === 'string') {
+      afterUrl = photoSet.after
+    } else if (photoSet.afterUrl) {
+      afterUrl = photoSet.afterUrl
+    } else if (photoSet.after instanceof Blob) {
+      afterUrl = URL.createObjectURL(photoSet.after)
+      createdAfterObj = true
+    }
+
+    setUrls({ before: beforeUrl, after: afterUrl })
 
     return () => {
-      URL.revokeObjectURL(before)
-      URL.revokeObjectURL(after)
+      if (createdBeforeObj && beforeUrl) URL.revokeObjectURL(beforeUrl)
+      if (createdAfterObj && afterUrl) URL.revokeObjectURL(afterUrl)
     }
   }, [photoSet])
 

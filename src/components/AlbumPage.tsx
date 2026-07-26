@@ -54,7 +54,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
 
     setSaveError('')
     try {
-      await deletePhotoSet(pendingDelete.id)
+      await deletePhotoSet(pendingDelete.id, album.id)
       setPendingDelete(null)
       await loadPhotoSets()
     } catch {
