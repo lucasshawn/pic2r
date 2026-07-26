@@ -1,4 +1,7 @@
+import { GetObjectCommand } from '@aws-sdk/client-s3'
 import {
+  getR2Client,
+  getBucketName,
   getR2Json,
   putR2Json,
   deleteR2Objects,
@@ -19,6 +22,7 @@ interface HandlerResponse {
   statusCode: number
   headers?: Record<string, string>
   body: string
+  isBase64Encoded?: boolean
 }
 
 const jsonHeaders = {
@@ -37,6 +41,37 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
   const path = rawPath.endsWith('/') && rawPath.length > 1 ? rawPath.slice(0, -1) : rawPath
 
   try {
+    // GET /api/image/*
+    const imageMatch = path.match(/^\/api\/image\/(.+)$/)
+    if (event.httpMethod === 'GET' && imageMatch) {
+      const key = imageMatch[1]
+      try {
+        const client = getR2Client()
+        const command = new GetObjectCommand({
+          Bucket: getBucketName(),
+          Key: key,
+        })
+        const response = await client.send(command)
+        if (!response.Body) {
+          return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Not Found' }) }
+        }
+        const contentType = response.ContentType || 'image/png'
+        const byteArray = await response.Body.transformToByteArray()
+        const base64 = Buffer.from(byteArray).toString('base64')
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=86400',
+            'Access-Control-Allow-Origin': '*',
+          },
+          body: base64,
+          isBase64Encoded: true,
+        }
+      } catch {
+        return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Image Not Found' }) }
+      }
+    }
     // GET /api/albums
     if (event.httpMethod === 'GET' && path === '/api/albums') {
       const albums = (await getR2Json<Album[]>('catalog/albums.json')) || []
@@ -100,11 +135,15 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
         photoSets.sort((a, b) => a.createdAt - b.createdAt)
         return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(photoSets) }
       }
-
       if (event.httpMethod === 'POST') {
         const body = event.body ? JSON.parse(event.body) : {}
         const payload: SavePhotoSetPayload = body.photoSet || body
-        if (!payload.name || !payload.beforeUrl || !payload.afterUrl) {
+        const beforeKey = payload.beforeKey || ''
+        const afterKey = payload.afterKey || ''
+        const beforeUrl = payload.beforeUrl || (beforeKey ? getPublicUrl(beforeKey) : '')
+        const afterUrl = payload.afterUrl || (afterKey ? getPublicUrl(afterKey) : '')
+
+        if (!payload.name || (!beforeUrl && !beforeKey) || (!afterUrl && !afterKey)) {
           return { statusCode: 400, headers: jsonHeaders, body: JSON.stringify({ error: 'Missing required photo set fields' }) }
         }
 
@@ -115,12 +154,12 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
           id: payload.id || crypto.randomUUID(),
           albumId,
           name: payload.name,
-          beforeUrl: payload.beforeUrl,
-          afterUrl: payload.afterUrl,
-          beforeKey: payload.beforeKey,
-          afterKey: payload.afterKey,
-          before: payload.beforeUrl,
-          after: payload.afterUrl,
+          beforeUrl,
+          afterUrl,
+          beforeKey,
+          afterKey,
+          before: beforeUrl,
+          after: afterUrl,
           createdAt: payload.createdAt || Date.now(),
         }
 
