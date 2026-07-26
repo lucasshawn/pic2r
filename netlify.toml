@@ -4,7 +4,6 @@
 
 [functions]
   directory = "netlify/functions"
-  ignored_function_patterns = ["*.test.ts", "*.test.js"]
 
 [[redirects]]
   from = "/api/*"
