@@ -4,12 +4,14 @@ import type { Album, PhotoSet } from '../types'
 import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
 import { PhotoSetForm } from './PhotoSetForm'
 import { ThumbnailPair } from './ThumbnailPair'
+import { useAuth } from '../context/AuthContext'
 
 interface AlbumPageProps {
   album: Album
 }
 
 export function AlbumPage({ album }: AlbumPageProps) {
+  const { isAdmin } = useAuth()
   const [photoSets, setPhotoSets] = useState<PhotoSet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [saveError, setSaveError] = useState('')
@@ -70,9 +72,11 @@ export function AlbumPage({ album }: AlbumPageProps) {
           <h2 id="album-heading">{album.name}</h2>
           <p>Save before-and-after image pairs to this album.</p>
         </div>
-        {!isAdding && !activeEdit && <button onClick={() => setIsAdding(true)}>+ Add new photo</button>}
+        {isAdmin && !isAdding && !activeEdit && (
+          <button onClick={() => setIsAdding(true)}>+ Add new photo</button>
+        )}
       </div>
-      {(isAdding || activeEdit) && (
+      {isAdmin && (isAdding || activeEdit) && (
         <PhotoSetForm
           key={activeEdit?.id ?? 'new'}
           initialPhotoSet={activeEdit ?? undefined}
@@ -82,7 +86,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
         />
       )}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
-      {pendingDelete && (
+      {isAdmin && pendingDelete && (
         <DeletePhotoSetDialog
           photoSet={pendingDelete}
           onCancel={() => setPendingDelete(null)}

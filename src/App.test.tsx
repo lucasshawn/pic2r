@@ -7,6 +7,12 @@ import { PhotoSetForm } from './components/PhotoSetForm'
 beforeEach(() => {
   window.location.hash = ''
   resetMemoryCatalog()
+  localStorage.clear()
+  import.meta.env.VITE_ADMIN_EMAILS = 'admin@example.com'
+  localStorage.setItem(
+    'pic2r_auth_user',
+    JSON.stringify({ email: 'admin@example.com', name: 'Dev Admin', isAdmin: true })
+  )
 })
 
 test('renders the picture catalog heading', async () => {

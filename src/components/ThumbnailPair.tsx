@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PhotoSet } from '../types'
+import { useAuth } from '../context/AuthContext'
 
 interface ThumbnailPairProps {
   photoSet: PhotoSet
@@ -8,6 +9,7 @@ interface ThumbnailPairProps {
 }
 
 export function ThumbnailPair({ photoSet, onEdit, onDelete }: ThumbnailPairProps) {
+  const { isAdmin } = useAuth()
   const [urls, setUrls] = useState<{ before: string; after: string } | null>(null)
 
   useEffect(() => {
@@ -51,10 +53,12 @@ export function ThumbnailPair({ photoSet, onEdit, onDelete }: ThumbnailPairProps
         <img src={urls.before} alt={`${photoSet.name} before`} />
         <img src={urls.after} alt={`${photoSet.name} after`} />
       </div>
-      <div className="thumbnail-pair-actions">
-        <button type="button" onClick={() => onEdit(photoSet)}>Edit {photoSet.name}</button>
-        <button type="button" onClick={() => onDelete(photoSet)}>Delete {photoSet.name}</button>
-      </div>
+      {isAdmin && (
+        <div className="thumbnail-pair-actions">
+          <button type="button" onClick={() => onEdit(photoSet)}>Edit {photoSet.name}</button>
+          <button type="button" onClick={() => onDelete(photoSet)}>Delete {photoSet.name}</button>
+        </div>
+      )}
     </article>
   )
 }

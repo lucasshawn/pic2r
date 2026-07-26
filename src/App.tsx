@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { CatalogPage } from './components/CatalogPage'
 import { AlbumPage } from './components/AlbumPage'
+import { Header } from './components/Header'
+import { AuthProvider } from './context/AuthContext'
 import { createAlbum, listAlbums } from './catalogRepository'
 import type { Album } from './types'
 import './styles.css'
@@ -34,13 +36,15 @@ export function App() {
   const selectedAlbum = albums.find((album) => album.id === albumId)
 
   return (
-    <main className="app-shell">
-      <h1>Picture Catalog</h1>
-      {selectedAlbum ? (
-        <AlbumPage album={selectedAlbum} />
-      ) : (
-        <CatalogPage albums={albums} isLoading={isLoading} onCreateAlbum={handleCreateAlbum} />
-      )}
-    </main>
+    <AuthProvider>
+      <Header />
+      <main className="app-shell">
+        {selectedAlbum ? (
+          <AlbumPage album={selectedAlbum} />
+        ) : (
+          <CatalogPage albums={albums} isLoading={isLoading} onCreateAlbum={handleCreateAlbum} />
+        )}
+      </main>
+    </AuthProvider>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Album } from '../types'
 import { AlbumForm } from './AlbumForm'
+import { useAuth } from '../context/AuthContext'
 
 interface CatalogPageProps {
   albums: Album[]
@@ -9,6 +10,7 @@ interface CatalogPageProps {
 }
 
 export function CatalogPage({ albums, isLoading, onCreateAlbum }: CatalogPageProps) {
+  const { isAdmin } = useAuth()
   const [isCreating, setIsCreating] = useState(false)
 
   async function handleSave(name: string) {
@@ -23,10 +25,10 @@ export function CatalogPage({ albums, isLoading, onCreateAlbum }: CatalogPagePro
           <h2 id="catalog-heading">Albums</h2>
           <p>Organize before-and-after photos by project.</p>
         </div>
-        {!isCreating && <button onClick={() => setIsCreating(true)}>Create album</button>}
+        {isAdmin && !isCreating && <button onClick={() => setIsCreating(true)}>Create album</button>}
       </div>
 
-      {isCreating && <AlbumForm onCancel={() => setIsCreating(false)} onSave={handleSave} />}
+      {isAdmin && isCreating && <AlbumForm onCancel={() => setIsCreating(false)} onSave={handleSave} />}
 
       {isLoading ? (
         <p className="empty-state" role="status">Loading albums…</p>
