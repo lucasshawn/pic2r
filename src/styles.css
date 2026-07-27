@@ -167,15 +167,24 @@ button:disabled { cursor: wait; opacity: 0.65; }
 .delete-dialog h3 { margin-top: 0; color: var(--text-primary); }
 
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.85rem 1.5rem;
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-card);
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+[data-theme="dark"] .app-header {
+  background-color: rgba(18, 18, 18, 0.85);
 }
 
 .header-title {
@@ -186,12 +195,15 @@ button:disabled { cursor: wait; opacity: 0.65; }
 }
 
 .header-title-link {
-  color: inherit;
+  background: var(--ig-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  font-size: 1.75rem;
+  letter-spacing: -0.025em;
   text-decoration: none;
-}
-
-.header-title-link:hover {
-  text-decoration: underline;
 }
 
 .guest-badge {
