@@ -209,3 +209,19 @@ test('preserves a selected image when a non-image is dropped', async () => {
   expect(await screen.findByText('Choose an image file.')).toBeInTheDocument()
   expect(screen.getByText('before.png')).toBeInTheDocument()
 })
+
+test('opens settings modal when settings button is clicked', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+
+  expect(screen.queryByRole('dialog', { name: /settings/i })).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /open settings/i }))
+
+  expect(screen.getByRole('dialog', { name: /settings/i })).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: /close settings|✕/i }))
+
+  expect(screen.queryByRole('dialog', { name: /settings/i })).not.toBeInTheDocument()
+})
+

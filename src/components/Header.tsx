@@ -14,7 +14,11 @@ declare global {
   }
 }
 
-export function Header() {
+export interface HeaderProps {
+  onOpenSettings?: () => void
+}
+
+export function Header({ onOpenSettings }: HeaderProps = {}) {
   const { user, isAdmin, loginWithGoogleCredential, logout } = useAuth()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
@@ -68,6 +72,14 @@ export function Header() {
         </h1>
       </div>
       <div className="header-auth">
+        <button
+          type="button"
+          className="btn-settings"
+          onClick={onOpenSettings}
+          aria-label="Open settings"
+        >
+          ⚙️ Settings
+        </button>
         {user ? (
           <div className="user-profile-badge">
             {user.picture && (
@@ -83,6 +95,7 @@ export function Header() {
           </div>
         ) : (
           <div className="login-controls">
+            <span className="guest-badge">Guest</span>
             <div id="google-signin-btn" className="google-signin-container">
               <button
                 type="button"
