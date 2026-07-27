@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createPhotoSet, deletePhotoSet, listPhotoSets, updatePhotoSet } from '../catalogRepository'
+import { createPhotoSet, deleteAlbum, deletePhotoSet, listPhotoSets, updatePhotoSet } from '../catalogRepository'
 import type { Album, PhotoSet } from '../types'
 import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
 import { PhotoSetForm } from './PhotoSetForm'
@@ -18,6 +18,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
   const [activeEdit, setActiveEdit] = useState<PhotoSet | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<PhotoSet | null>(null)
+  const [isDeletingAlbum, setIsDeletingAlbum] = useState(false)
 
   async function loadPhotoSets() {
     const loadedPhotoSets = await listPhotoSets(album.id)
@@ -66,17 +67,42 @@ export function AlbumPage({ album }: AlbumPageProps) {
   }
 
   return (
-    <section aria-labelledby="album-heading">
+    <section className="album-page" aria-labelledby="album-heading">
       <a href="#/">← Back to albums</a>
       <div className="page-heading">
         <div>
           <h2 id="album-heading">{album.name}</h2>
+          {album.description && <p className="album-description">{album.description}</p>}
           <p>Save before-and-after image pairs to this album.</p>
         </div>
         {isAdmin && !isAdding && !activeEdit && (
-          <button onClick={() => setIsAdding(true)}>+ Add Before & After</button>
+          <div className="album-actions">
+            <button onClick={() => setIsAdding(true)}>+ Add Before & After</button>
+            <button type="button" className="btn-delete-album" onClick={() => setIsDeletingAlbum(true)}>
+              Delete Album
+            </button>
+          </div>
         )}
       </div>
+      {isDeletingAlbum && (
+        <div className="delete-dialog" role="dialog" aria-modal="true" aria-label="Delete Album">
+          <h3>Delete Album</h3>
+          <p>Are you sure you want to delete this album and all its Before & After entries?</p>
+          <div className="form-actions">
+            <button type="button" onClick={() => setIsDeletingAlbum(false)}>Cancel</button>
+            <button
+              type="button"
+              className="btn-delete-album"
+              onClick={async () => {
+                await deleteAlbum(album.id)
+                window.location.hash = '#/'
+              }}
+            >
+              Delete Album
+            </button>
+          </div>
+        </div>
+      )}
       {isAdmin && (isAdding || activeEdit) && (
         <PhotoSetForm
           key={activeEdit?.id ?? 'new'}
