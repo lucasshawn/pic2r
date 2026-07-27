@@ -1,25 +1,28 @@
 :root {
-  --bg-page: #f8fafc;
+  --bg-page: #fafafa;
   --bg-card: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #5d687a;
-  --border-color: #d9dfeb;
-  --input-bg: #ffffff;
-  --card-shadow: 0 0.25rem 1rem rgb(23 32 51 / 0.06);
+  --text-primary: #262626;
+  --text-secondary: #8e8e8e;
+  --border-color: #dbdbdb;
+  --input-bg: #fafafa;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  --ig-blue: #0095f6;
+  --ig-blue-hover: #1877f2;
 
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text-primary);
   background-color: var(--bg-page);
 }
 
 [data-theme="dark"] {
-  --bg-page: #0f172a;
-  --bg-card: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --border-color: #334155;
-  --input-bg: #0f172a;
-  --card-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.3);
+  --bg-page: #000000;
+  --bg-card: #121212;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a8a8a8;
+  --border-color: #262626;
+  --input-bg: #121212;
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -51,10 +54,15 @@ input, textarea, select {
 button {
   border: 0;
   border-radius: 0.5rem;
-  background: #2358d8;
+  background: var(--ig-blue, #0095f6);
   color: #fff;
+  font-weight: 600;
   cursor: pointer;
   padding: 0.7rem 1rem;
+}
+
+button:hover {
+  background: var(--ig-blue-hover, #1877f2);
 }
 
 button:disabled { cursor: wait; opacity: 0.65; }
