@@ -19,12 +19,13 @@ describe('catalogRepository with API', () => {
   })
 
   test('creates album and fetches list from API', async () => {
-    const album = await createAlbum('Renovation')
+    const album = await createAlbum('Renovation', 'House renovation')
     expect(album.name).toBe('Renovation')
+    expect(album.description).toBe('House renovation')
     expect(album.id).toBeDefined()
 
     const albums = await listAlbums()
-    expect(albums.some((a) => a.id === album.id)).toBe(true)
+    expect(albums.some((a) => a.id === album.id && a.description === 'House renovation')).toBe(true)
   })
 
   test('creates photo set using upload URLs and API save', async () => {

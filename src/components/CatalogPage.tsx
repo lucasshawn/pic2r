@@ -6,15 +6,15 @@ import { useAuth } from '../context/AuthContext'
 interface CatalogPageProps {
   albums: Album[]
   isLoading: boolean
-  onCreateAlbum: (name: string) => Promise<void>
+  onCreateAlbum: (name: string, description?: string) => Promise<void>
 }
 
 export function CatalogPage({ albums, isLoading, onCreateAlbum }: CatalogPageProps) {
   const { isAdmin } = useAuth()
   const [isCreating, setIsCreating] = useState(false)
 
-  async function handleSave(name: string) {
-    await onCreateAlbum(name)
+  async function handleSave(name: string, description?: string) {
+    await onCreateAlbum(name, description)
     setIsCreating(false)
   }
 
@@ -39,6 +39,7 @@ export function CatalogPage({ albums, isLoading, onCreateAlbum }: CatalogPagePro
           {albums.map((album) => (
             <a className="album-card" href={`#/albums/${album.id}`} key={album.id}>
               <h3>{album.name}</h3>
+              {album.description && <p className="album-card-description">{album.description}</p>}
               <span>View album</span>
             </a>
           ))}

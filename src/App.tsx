@@ -28,8 +28,8 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  async function handleCreateAlbum(name: string) {
-    const album = await createAlbum(name)
+  async function handleCreateAlbum(name: string, description?: string) {
+    const album = await createAlbum(name, description)
     setAlbums((currentAlbums) => [...currentAlbums, album])
   }
 

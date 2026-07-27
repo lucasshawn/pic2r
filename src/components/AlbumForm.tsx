@@ -3,11 +3,12 @@ import { validateAlbumName } from '../validation'
 
 interface AlbumFormProps {
   onCancel: () => void
-  onSave: (name: string) => Promise<void>
+  onSave: (name: string, description?: string) => Promise<void>
 }
 
 export function AlbumForm({ onCancel, onSave }: AlbumFormProps) {
   const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -21,7 +22,8 @@ export function AlbumForm({ onCancel, onSave }: AlbumFormProps) {
     }
 
     setIsSaving(true)
-    await onSave(name.trim())
+    await onSave(name.trim(), description.trim() || undefined)
+    setDescription('')
   }
 
   return (
@@ -38,6 +40,14 @@ export function AlbumForm({ onCancel, onSave }: AlbumFormProps) {
         }}
       />
       {error && <p id="album-name-error" className="form-error">{error}</p>}
+      <label htmlFor="album-description">Description (optional)</label>
+      <textarea
+        id="album-description"
+        rows={3}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Description (optional)"
+      />
       <div className="form-actions">
         <button type="button" onClick={onCancel} disabled={isSaving}>Cancel</button>
         <button type="submit" disabled={isSaving}>{isSaving ? 'Saving…' : 'Save album'}</button>

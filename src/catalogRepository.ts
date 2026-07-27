@@ -47,11 +47,11 @@ export async function listAlbums(): Promise<Album[]> {
   return [...memoryAlbums].sort((a, b) => a.createdAt - b.createdAt)
 }
 
-export async function createAlbum(name: string): Promise<Album> {
+export async function createAlbum(name: string, description?: string): Promise<Album> {
   const data = await apiFetch<Album>('/api/albums', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, description }),
   })
 
   if (data !== null) {
@@ -62,6 +62,7 @@ export async function createAlbum(name: string): Promise<Album> {
   const newAlbum: Album = {
     id: crypto.randomUUID(),
     name,
+    description,
     createdAt: Date.now(),
   }
   memoryAlbums.push(newAlbum)

@@ -51,5 +51,45 @@ describe('CatalogPage Component (Read-Only vs Admin)', () => {
 
     await user.click(createBtn)
     expect(screen.getByLabelText(/album name/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/description \(optional\)/i)).toBeInTheDocument()
+  })
+
+  it('renders album description on album card when present', () => {
+    const albumsWithDesc: Album[] = [
+      { id: 'alb-1', name: 'Kitchen Remodel', description: 'Renovating kitchen counters', createdAt: 1000 },
+    ]
+
+    render(
+      <AuthProvider>
+        <CatalogPage albums={albumsWithDesc} isLoading={false} onCreateAlbum={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.getByText('Kitchen Remodel')).toBeInTheDocument()
+    const descEl = screen.getByText('Renovating kitchen counters')
+    expect(descEl).toBeInTheDocument()
+    expect(descEl).toHaveClass('album-card-description')
+  })
+
+  it('allows creating an album with an optional description', async () => {
+    const user = userEvent.setup()
+    const handleCreateAlbum = vi.fn()
+    localStorage.setItem(
+      'pic2r_auth_user',
+      JSON.stringify({ email: 'admin@example.com', name: 'Admin', isAdmin: true })
+    )
+
+    render(
+      <AuthProvider>
+        <CatalogPage albums={sampleAlbums} isLoading={false} onCreateAlbum={handleCreateAlbum} />
+      </AuthProvider>
+    )
+
+    await user.click(screen.getByRole('button', { name: /create album/i }))
+    await user.type(screen.getByLabelText(/album name/i), 'Basement Renovation')
+    await user.type(screen.getByLabelText(/description \(optional\)/i), 'Finishing the basement space')
+    await user.click(screen.getByRole('button', { name: /save album/i }))
+
+    expect(handleCreateAlbum).toHaveBeenCalledWith('Basement Renovation', 'Finishing the basement space')
   })
 })
