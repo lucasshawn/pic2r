@@ -29,7 +29,7 @@ function convertViaCanvas(file: File): Promise<Blob | null> {
       const ctx = canvas.getContext('2d')
       if (!ctx) return resolve(null)
       ctx.drawImage(img, 0, 0)
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.9)
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
@@ -51,8 +51,8 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     if (nativeBlob && nativeBlob.size > 0) {
       return new File([nativeBlob], newFileName, { type: 'image/jpeg' })
     }
-  } catch {
-    // Native decode failed, continue to heic2any
+  } catch (e) {
+    console.warn('Canvas conversion skipped:', e)
   }
 
   // Layer 2: Use heic2any for Chromium/Firefox/Windows
@@ -61,22 +61,22 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
       const heic2anyModule = await import('heic2any')
       const heic2any = heic2anyModule.default || heic2anyModule
 
-      const buffer = await file.arrayBuffer()
-      const heicBlob = new Blob([buffer], { type: 'image/heic' })
-
       const conversionResult = await heic2any({
-        blob: heicBlob,
+        blob: file,
         toType: 'image/jpeg',
-        quality: 0.9,
+        quality: 0.85,
       })
 
-      const resultBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult
-      return new File([resultBlob], newFileName, { type: 'image/jpeg' })
+      const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult
+      if (blob && blob.size > 0) {
+        return new File([blob], newFileName, { type: 'image/jpeg' })
+      }
     } catch (error) {
       console.error('heic2any conversion error:', error)
+      throw new Error('HEIC conversion failed: ' + (error instanceof Error ? error.message : String(error)))
     }
   }
 
-  // Fallback: If in Node/JSDOM test runner without Web Worker
+  // In Node/JSDOM test runner
   return new File([file], newFileName, { type: 'image/jpeg' })
 }
