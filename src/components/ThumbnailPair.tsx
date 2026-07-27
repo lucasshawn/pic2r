@@ -12,6 +12,17 @@ interface ThumbnailPairProps {
   onCancelDelete?: () => void
 }
 
+function formatDate(timestamp: number): string {
+  const date = new Date(timestamp)
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 export function ThumbnailPair({
   photoSet,
   onEdit,
@@ -59,11 +70,19 @@ export function ThumbnailPair({
 
   return (
     <article className="thumbnail-pair">
-      <h3>{photoSet.name}</h3>
+      <header className="thumbnail-pair-header">
+        <h3>{photoSet.name}</h3>
+        {photoSet.description && <p className="thumbnail-pair-description">{photoSet.description}</p>}
+      </header>
       <div className="thumbnail-pair-images">
         <img src={urls.before} alt={`${photoSet.name} before`} />
         <img src={urls.after} alt={`${photoSet.name} after`} />
       </div>
+      <footer className="thumbnail-pair-footer">
+        <span className="photo-date">
+          {photoSet.takenAt ? `Taken ${formatDate(photoSet.takenAt)}` : `Created ${formatDate(photoSet.createdAt)}`}
+        </span>
+      </footer>
       {isAdmin && (
         <div className="thumbnail-pair-actions">
           <button type="button" onClick={() => onEdit(photoSet)}>Edit {photoSet.name}</button>

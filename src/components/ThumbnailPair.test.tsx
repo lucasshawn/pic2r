@@ -91,4 +91,78 @@ describe('ThumbnailPair Component', () => {
     expect(screen.getByRole('button', { name: /edit living room/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /delete living room/i })).toBeInTheDocument()
   })
+
+  it('renders description when present', () => {
+    const photoSetWithDesc: PhotoSet = {
+      ...photoSet,
+      description: 'Renovated in 2024 with new flooring',
+    }
+
+    render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSetWithDesc} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.getByText('Renovated in 2024 with new flooring')).toBeInTheDocument()
+  })
+
+  it('does not render description element when description is missing', () => {
+    const { container } = render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSet} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(container.querySelector('.thumbnail-pair-description')).not.toBeInTheDocument()
+  })
+
+  it('renders Created date when takenAt is not provided', () => {
+    const testTimestamp = 1700000000000
+    const photoSetWithCreated: PhotoSet = {
+      ...photoSet,
+      createdAt: testTimestamp,
+    }
+
+    const expectedDateStr = new Date(testTimestamp).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+
+    render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSetWithCreated} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.getByText(`Created ${expectedDateStr}`)).toBeInTheDocument()
+  })
+
+  it('renders Taken date when takenAt is provided', () => {
+    const takenTimestamp = 1650000000000
+    const photoSetWithTaken: PhotoSet = {
+      ...photoSet,
+      createdAt: 1700000000000,
+      takenAt: takenTimestamp,
+    }
+
+    const expectedDateStr = new Date(takenTimestamp).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+
+    render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSetWithTaken} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.getByText(`Taken ${expectedDateStr}`)).toBeInTheDocument()
+  })
 })
