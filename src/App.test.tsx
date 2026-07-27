@@ -58,7 +58,7 @@ test('shows the new photo form only after selecting add new photo', async () => 
   await screen.findByRole('heading', { name: 'Renovation', level: 2 })
   expect(screen.queryByLabelText(/set name/i)).not.toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: /add new photo/i }))
+  await user.click(screen.getByRole('button', { name: /add before & after/i }))
   expect(screen.getByLabelText(/set name/i)).toBeInTheDocument()
 })
 
@@ -68,7 +68,7 @@ test('saves a pair and refreshes it into the album history', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
-  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
+  await user.click(await screen.findByRole('button', { name: /add before & after/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(
     screen.getByLabelText(/^before/i),
@@ -78,7 +78,7 @@ test('saves a pair and refreshes it into the album history', async () => {
     screen.getByLabelText(/^after/i),
     new File(['after'], 'after.png', { type: 'image/png' }),
   )
-  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await user.click(screen.getByRole('button', { name: /save before & after/i }))
 
   expect(await screen.findByRole('heading', { name: 'Living Room 1' })).toBeInTheDocument()
   expect(screen.getByRole('img', { name: /living room 1 before/i })).toBeInTheDocument()
@@ -91,11 +91,11 @@ test('cancels an edit without changing the saved set', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
-  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
+  await user.click(await screen.findByRole('button', { name: /add before & after/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
-  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await user.click(screen.getByRole('button', { name: /save before & after/i }))
   await screen.findByRole('heading', { name: 'Living Room 1' })
 
   await user.click(screen.getByRole('button', { name: /edit living room 1/i }))
@@ -113,11 +113,11 @@ test('deletes a set only after confirmation', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
-  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
+  await user.click(await screen.findByRole('button', { name: /add before & after/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
-  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await user.click(screen.getByRole('button', { name: /save before & after/i }))
   await screen.findByRole('heading', { name: 'Living Room 1' })
 
   await user.click(screen.getByRole('button', { name: /delete living room 1/i }))
@@ -126,7 +126,7 @@ test('deletes a set only after confirmation', async () => {
   expect(screen.getByRole('heading', { name: 'Living Room 1' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: /delete living room 1/i }))
   await user.click(screen.getByRole('button', { name: /^delete$/i }))
-  expect(await screen.findByText(/no photo sets yet/i)).toBeInTheDocument()
+  expect(await screen.findByText(/no before & after pairs in this album yet/i)).toBeInTheDocument()
 })
 
 test('saves an edit while retaining unchanged images', async () => {
@@ -135,11 +135,11 @@ test('saves an edit while retaining unchanged images', async () => {
   window.location.hash = `#/albums/${album.id}`
   render(<App />)
 
-  await user.click(await screen.findByRole('button', { name: /add new photo/i }))
+  await user.click(await screen.findByRole('button', { name: /add before & after/i }))
   await user.type(await screen.findByLabelText(/set name/i), 'Living Room 1')
   await user.upload(screen.getByLabelText(/^before/i), new File(['before'], 'before.png', { type: 'image/png' }))
   await user.upload(screen.getByLabelText(/^after/i), new File(['after'], 'after.png', { type: 'image/png' }))
-  await user.click(screen.getByRole('button', { name: /save photo set/i }))
+  await user.click(screen.getByRole('button', { name: /save before & after/i }))
   await screen.findByRole('heading', { name: 'Living Room 1' })
 
   await user.click(screen.getByRole('button', { name: /edit living room 1/i }))
@@ -156,7 +156,7 @@ test('enables save only after a name and both image files are selected', async (
   const user = userEvent.setup()
   render(<PhotoSetForm onSave={vi.fn()} />)
 
-  const save = screen.getByRole('button', { name: /save photo set/i })
+  const save = screen.getByRole('button', { name: /save before & after/i })
   expect(save).toBeDisabled()
 
   await user.type(screen.getByLabelText(/set name/i), 'Living Room 1')

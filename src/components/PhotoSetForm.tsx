@@ -8,11 +8,12 @@ interface PhotoSetFormProps {
   initialPhotoSet?: PhotoSet
   submitLabel?: string
   onCancel?: () => void
-  onSave: (name: string, before: File | null, after: File | null) => Promise<void>
+  onSave: (name: string, description: string, before: File | null, after: File | null) => Promise<void>
 }
 
-export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', onCancel, onSave }: PhotoSetFormProps) {
+export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save Before & After', onCancel, onSave }: PhotoSetFormProps) {
   const [name, setName] = useState(initialPhotoSet?.name ?? '')
+  const [description, setDescription] = useState(initialPhotoSet?.description ?? '')
   const [before, setBefore] = useState<File | null>(null)
   const [after, setAfter] = useState<File | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -34,7 +35,7 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', 
     }
 
     if (field === 'before') setBefore(file)
-    else setAfter(file)
+    else setAfter(field === 'after' ? file : after)
     setErrors((currentErrors) => ({ ...currentErrors, [field]: resolvedFieldError }))
   }
 
@@ -49,8 +50,9 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', 
     try {
       const finalBefore = before ? await convertHeicToJpeg(before) : null
       const finalAfter = after ? await convertHeicToJpeg(after) : null
-      await onSave(name.trim(), finalBefore, finalAfter)
+      await onSave(name.trim(), description.trim(), finalBefore, finalAfter)
       setName('')
+      setDescription('')
       setBefore(null)
       setAfter(null)
       setErrors({})
@@ -73,6 +75,14 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', 
         aria-invalid={Boolean(errors.name)}
       />
       {errors.name && <p id="photo-set-name-error" className="form-error">{errors.name}</p>}
+      <label htmlFor="photo-set-description">Description (optional)</label>
+      <textarea
+        id="photo-set-description"
+        rows={3}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        placeholder="Add details about this before & after..."
+      />
       <DropZone label="Before" file={before} error={errors.before} onFileChange={(file) => handleFileChange('before', file)} />
       <DropZone label="After" file={after} error={errors.after} onFileChange={(file) => handleFileChange('after', file)} />
       <div className="form-actions">

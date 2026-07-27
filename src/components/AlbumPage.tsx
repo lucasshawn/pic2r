@@ -30,24 +30,25 @@ export function AlbumPage({ album }: AlbumPageProps) {
     void loadPhotoSets()
   }, [album.id])
 
-  async function handleSave(name: string, before: File | null, after: File | null) {
+  async function handleSave(name: string, description: string, before: File | null, after: File | null) {
     setSaveError('')
     try {
       if (activeEdit) {
         await updatePhotoSet({
           ...activeEdit,
           name,
+          description,
           before: before ?? activeEdit.before,
           after: after ?? activeEdit.after,
         })
         setActiveEdit(null)
       } else if (before && after) {
-        await createPhotoSet(album.id, name, before, after)
+        await createPhotoSet(album.id, name, before, after, description)
         setIsAdding(false)
       }
       await loadPhotoSets()
     } catch {
-      setSaveError('Unable to save this photo set.')
+      setSaveError('Unable to save this Before & After.')
     }
   }
 
@@ -60,7 +61,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
       setPendingDelete(null)
       await loadPhotoSets()
     } catch {
-      setSaveError('Unable to delete this photo set.')
+      setSaveError('Unable to delete this Before & After.')
     }
   }
 
@@ -73,7 +74,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
           <p>Save before-and-after image pairs to this album.</p>
         </div>
         {isAdmin && !isAdding && !activeEdit && (
-          <button onClick={() => setIsAdding(true)}>+ Add new photo</button>
+          <button onClick={() => setIsAdding(true)}>+ Add Before & After</button>
         )}
       </div>
       {isAdmin && (isAdding || activeEdit) && (
@@ -86,7 +87,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
         />
       )}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
-      {!isLoading && photoSets.length === 0 && <p className="empty-state">No photo sets yet.</p>}
+      {!isLoading && photoSets.length === 0 && <p className="empty-state">No Before & After pairs in this album yet.</p>}
       {photoSets.length > 0 && (
         <div className="photo-set-history">
           {photoSets.map((photoSet) => (
