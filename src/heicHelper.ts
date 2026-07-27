@@ -39,6 +39,33 @@ function convertViaCanvas(file: File): Promise<Blob | null> {
   })
 }
 
+async function decodeViaHeicDecode(file: File): Promise<Blob | null> {
+  if (typeof window === 'undefined') return null
+  try {
+    const heicDecodeModule = await import('heic-decode')
+    const heicDecode = heicDecodeModule.default || heicDecodeModule
+
+    const arrayBuffer = await file.arrayBuffer()
+    const { width, height, data } = await heicDecode({ buffer: new Uint8Array(arrayBuffer) })
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+
+    const imageData = new ImageData(new Uint8ClampedArray(data), width, height)
+    ctx.putImageData(imageData, 0, 0)
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.85)
+    })
+  } catch (err) {
+    console.warn('heic-decode failed:', err)
+    return null
+  }
+}
+
 export async function convertHeicToJpeg(file: File): Promise<File> {
   if (!isHeicFile(file)) return file
 
@@ -55,7 +82,17 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     console.warn('Canvas conversion skipped:', e)
   }
 
-  // Layer 2: Use heic2any for Chromium/Firefox/Windows
+  // Layer 2: Use heic-decode (supports iPhone HEVC/H.265 HEIC format)
+  try {
+    const heicDecodeBlob = await decodeViaHeicDecode(file)
+    if (heicDecodeBlob && heicDecodeBlob.size > 0) {
+      return new File([heicDecodeBlob], newFileName, { type: 'image/jpeg' })
+    }
+  } catch (e) {
+    console.warn('heic-decode conversion skipped:', e)
+  }
+
+  // Layer 3: Use heic2any fallback
   if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
     try {
       const heic2anyModule = await import('heic2any')
@@ -68,8 +105,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
           toType: 'image/jpeg',
           quality: 0.85,
         })
-      } catch (singleErr) {
-        console.warn('Single-frame HEIC decode failed, trying multi-frame mode:', singleErr)
+      } catch {
         conversionResult = await heic2any({
           blob: file,
           toType: 'image/jpeg',
@@ -84,10 +120,9 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
       }
     } catch (error) {
       console.error('heic2any conversion error:', error)
-      throw new Error('HEIC conversion failed: ' + (error instanceof Error ? error.message : String(error)))
     }
   }
 
-  // In Node/JSDOM test runner
+  // JSDOM / Node test runner fallback
   return new File([file], newFileName, { type: 'image/jpeg' })
 }
