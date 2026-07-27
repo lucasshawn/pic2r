@@ -55,7 +55,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     console.warn('Canvas conversion skipped:', e)
   }
 
-  // Layer 2: Use heic2any with multi-frame fallback (Chromium/Firefox/Windows)
+  // Layer 2: Use heic2any for Chromium/Firefox/Windows
   if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
     try {
       const heic2anyModule = await import('heic2any')
@@ -69,7 +69,6 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
           quality: 0.85,
         })
       } catch (singleErr) {
-        // Try multiple mode for iPhone Live Photos, Portrait depth photos, and HEIC sequences
         console.warn('Single-frame HEIC decode failed, trying multi-frame mode:', singleErr)
         conversionResult = await heic2any({
           blob: file,

@@ -38,11 +38,14 @@ export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
     if (isHeicFile(rawFile)) {
       setIsConverting(true)
       try {
+        console.log('[DropZone] Converting HEIC file:', rawFile.name, rawFile.size, rawFile.type)
         const convertedFile = await convertHeicToJpeg(rawFile)
+        console.log('[DropZone] Successfully converted HEIC to JPEG:', convertedFile.name, convertedFile.size)
         onFileChange(convertedFile)
-      } catch (err) {
-        console.error('HEIC conversion error:', err)
-        setConversionError('Could not convert HEIC photo. Please try another image or a JPG/PNG.')
+      } catch (err: any) {
+        console.error('[DropZone] HEIC conversion failed:', err)
+        const msg = err?.message || String(err)
+        setConversionError(`Could not convert HEIC photo (${msg}). Please select a JPG or PNG.`)
         onFileChange(null)
       } finally {
         setIsConverting(false)
