@@ -45,7 +45,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   const baseName = file.name.replace(/\.[^/.]+$/, '')
   const newFileName = `${baseName}.jpg`
 
-  // Layer 1: Try native browser Image + Canvas conversion (Fast & native on Safari/macOS/iOS)
+  // Layer 1: Try native browser Canvas decode (Safari/macOS/iOS)
   try {
     const nativeBlob = await convertViaCanvas(file)
     if (nativeBlob && nativeBlob.size > 0) {
@@ -61,26 +61,22 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
       const heic2anyModule = await import('heic2any')
       const heic2any = heic2anyModule.default || heic2anyModule
 
-      const heicBlob = new Blob([file], { type: 'image/heic' })
+      const buffer = await file.arrayBuffer()
+      const heicBlob = new Blob([buffer], { type: 'image/heic' })
 
-      const conversionPromise = heic2any({
+      const conversionResult = await heic2any({
         blob: heicBlob,
         toType: 'image/jpeg',
         quality: 0.9,
       })
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('HEIC conversion timeout')), 10000)
-      )
-
-      const convertedResult = await Promise.race([conversionPromise, timeoutPromise])
-      const blob = Array.isArray(convertedResult) ? convertedResult[0] : convertedResult
-      return new File([blob], newFileName, { type: 'image/jpeg' })
+      const resultBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult
+      return new File([resultBlob], newFileName, { type: 'image/jpeg' })
     } catch (error) {
       console.error('heic2any conversion error:', error)
     }
   }
 
-  // Fallback: Force .jpg extension and image/jpeg MIME type
+  // Fallback: If in Node/JSDOM test runner without Web Worker
   return new File([file], newFileName, { type: 'image/jpeg' })
 }

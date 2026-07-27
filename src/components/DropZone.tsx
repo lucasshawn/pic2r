@@ -35,19 +35,20 @@ export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
       return
     }
 
-    // Pass file immediately so form validation passes and Save button enables right away
-    onFileChange(rawFile)
-
     if (isHeicFile(rawFile)) {
       setIsConverting(true)
       try {
         const convertedFile = await convertHeicToJpeg(rawFile)
         onFileChange(convertedFile)
       } catch (err) {
-        console.warn('HEIC conversion warning:', err)
+        console.error('HEIC conversion error:', err)
+        setConversionError('Could not convert HEIC photo. Please try another image or a JPG/PNG.')
+        onFileChange(null)
       } finally {
         setIsConverting(false)
       }
+    } else {
+      onFileChange(rawFile)
     }
   }
 
