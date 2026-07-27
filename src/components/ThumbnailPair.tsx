@@ -75,8 +75,14 @@ export function ThumbnailPair({
         {photoSet.description && <p className="thumbnail-pair-description">{photoSet.description}</p>}
       </header>
       <div className="thumbnail-pair-images">
-        <img src={urls.before} alt={`${photoSet.name} before`} />
-        <img src={urls.after} alt={`${photoSet.name} after`} />
+        <div className="image-wrapper">
+          <span className="image-badge">BEFORE</span>
+          <img src={urls.before} alt={`${photoSet.name} before`} />
+        </div>
+        <div className="image-wrapper">
+          <span className="image-badge">AFTER</span>
+          <img src={urls.after} alt={`${photoSet.name} after`} />
+        </div>
       </div>
       <footer className="thumbnail-pair-footer">
         <span className="photo-date">

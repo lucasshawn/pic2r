@@ -165,4 +165,15 @@ describe('ThumbnailPair Component', () => {
 
     expect(screen.getByText(`Taken ${expectedDateStr}`)).toBeInTheDocument()
   })
+
+  it('renders BEFORE and AFTER overlay badges', () => {
+    render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSet} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.getByText('BEFORE')).toBeInTheDocument()
+    expect(screen.getByText('AFTER')).toBeInTheDocument()
+  })
 })
