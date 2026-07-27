@@ -15,8 +15,7 @@ declare global {
 }
 
 export function Header() {
-  const { user, isAdmin, mockDevLogin, loginWithGoogleCredential, logout } = useAuth()
-  const [devEmail, setDevEmail] = useState('')
+  const { user, isAdmin, loginWithGoogleCredential, logout } = useAuth()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   useEffect(() => {
@@ -60,17 +59,6 @@ export function Header() {
       return () => clearInterval(interval)
     }
   }, [clientId, loginWithGoogleCredential])
-
-  const handleDevSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (devEmail.trim()) {
-      mockDevLogin(devEmail.trim())
-      setDevEmail('')
-    }
-  }
-
-  // Show dev login fallback only if VITE_GOOGLE_CLIENT_ID is not set or in dev mode without clientId
-  const showDevSection = !clientId || import.meta.env.DEV
 
   return (
     <header className="app-header">
@@ -126,37 +114,6 @@ export function Header() {
                 <span>Sign in with Google</span>
               </button>
             </div>
-            {showDevSection && !clientId && (
-              <div className="dev-login-section">
-                <span className="dev-login-label">Dev:</span>
-                <button
-                  type="button"
-                  className="dev-login-btn"
-                  onClick={() => mockDevLogin('admin@example.com', 'Dev Admin')}
-                >
-                  Dev Admin Login
-                </button>
-                <button
-                  type="button"
-                  className="dev-login-btn"
-                  onClick={() => mockDevLogin('user@example.com', 'Dev Reader')}
-                >
-                  Dev Reader Login
-                </button>
-                <form onSubmit={handleDevSubmit} className="dev-login-form">
-                  <input
-                    type="email"
-                    placeholder="Enter dev email..."
-                    value={devEmail}
-                    onChange={(e) => setDevEmail(e.target.value)}
-                    className="dev-login-input"
-                  />
-                  <button type="submit" className="dev-login-submit">
-                    Login
-                  </button>
-                </form>
-              </div>
-            )}
           </div>
         )}
       </div>
