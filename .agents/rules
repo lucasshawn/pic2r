@@ -1,0 +1,6 @@
+# Workspace Rules
+
+## Permission & Execution Policy
+- All read, write, design, and plan actions under `docs/superpowers/` and `.superpowers/` are fully pre-approved and execute automatically.
+- Non-destructive commands (`git`, `npm`, `npx`, `node`, `vitest`, `gh`, read operations, test scripts) are pre-approved and should execute without prompting.
+- Require explicit permission before executing destructive commands (e.g. `git reset --hard`, deleting uncommitted files outside `docs/superpowers`, or modifying `.env` secrets).
