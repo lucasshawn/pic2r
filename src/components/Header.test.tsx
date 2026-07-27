@@ -29,6 +29,16 @@ describe('Header Component', () => {
     expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument()
   })
 
+  it('renders Before and Afters title as a link to home (#)', () => {
+    render(
+      <AuthProvider>
+        <Header />
+      </AuthProvider>
+    )
+    const link = screen.getByRole('link', { name: /before and afters/i })
+    expect(link).toHaveAttribute('href', '#')
+  })
+
   it('renders user profile badge and Sign Out button when user is logged in', () => {
     localStorage.setItem(
       'pic2r_auth_user',
