@@ -67,7 +67,7 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .photo-set-history { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1.5rem; }
 
-.thumbnail-pair { background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; padding: 1rem; }
+.thumbnail-pair { position: relative; background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; padding: 1rem; }
 
 .thumbnail-pair h3 { margin: 0 0 0.75rem; }
 
@@ -81,7 +81,22 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .thumbnail-pair-actions button:last-child { background: #b42318; }
 
-.delete-dialog { background: #fff; border: 1px solid #d9dfeb; border-radius: 0.75rem; margin-top: 1rem; max-width: 32rem; padding: 1rem; }
+.delete-dialog {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(4px);
+  border: 1px solid #d9dfeb;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+}
 
 .delete-dialog h3 { margin-top: 0; }
 

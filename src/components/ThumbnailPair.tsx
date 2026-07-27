@@ -1,14 +1,25 @@
 import { useEffect, useState } from 'react'
 import type { PhotoSet } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
 
 interface ThumbnailPairProps {
   photoSet: PhotoSet
   onEdit: (photoSet: PhotoSet) => void
   onDelete: (photoSet: PhotoSet) => void
+  isPendingDelete?: boolean
+  onConfirmDelete?: () => void
+  onCancelDelete?: () => void
 }
 
-export function ThumbnailPair({ photoSet, onEdit, onDelete }: ThumbnailPairProps) {
+export function ThumbnailPair({
+  photoSet,
+  onEdit,
+  onDelete,
+  isPendingDelete,
+  onConfirmDelete,
+  onCancelDelete,
+}: ThumbnailPairProps) {
   const { isAdmin } = useAuth()
   const [urls, setUrls] = useState<{ before: string; after: string } | null>(null)
 
@@ -58,6 +69,13 @@ export function ThumbnailPair({ photoSet, onEdit, onDelete }: ThumbnailPairProps
           <button type="button" onClick={() => onEdit(photoSet)}>Edit {photoSet.name}</button>
           <button type="button" onClick={() => onDelete(photoSet)}>Delete {photoSet.name}</button>
         </div>
+      )}
+      {isAdmin && isPendingDelete && onConfirmDelete && onCancelDelete && (
+        <DeletePhotoSetDialog
+          photoSet={photoSet}
+          onConfirm={onConfirmDelete}
+          onCancel={onCancelDelete}
+        />
       )}
     </article>
   )

@@ -86,18 +86,19 @@ export function AlbumPage({ album }: AlbumPageProps) {
         />
       )}
       {saveError && <p className="form-error" role="alert">{saveError}</p>}
-      {isAdmin && pendingDelete && (
-        <DeletePhotoSetDialog
-          photoSet={pendingDelete}
-          onCancel={() => setPendingDelete(null)}
-          onConfirm={handleDelete}
-        />
-      )}
       {!isLoading && photoSets.length === 0 && <p className="empty-state">No photo sets yet.</p>}
       {photoSets.length > 0 && (
         <div className="photo-set-history">
           {photoSets.map((photoSet) => (
-            <ThumbnailPair key={photoSet.id} photoSet={photoSet} onEdit={setActiveEdit} onDelete={setPendingDelete} />
+            <ThumbnailPair
+              key={photoSet.id}
+              photoSet={photoSet}
+              onEdit={setActiveEdit}
+              onDelete={setPendingDelete}
+              isPendingDelete={pendingDelete?.id === photoSet.id}
+              onConfirmDelete={handleDelete}
+              onCancelDelete={() => setPendingDelete(null)}
+            />
           ))}
         </div>
       )}
