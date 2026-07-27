@@ -1,4 +1,5 @@
 import { useEffect, useId, useState, type DragEvent } from 'react'
+import { isHeicFile, isImageFile, convertHeicToJpeg } from '../heicHelper'
 
 interface DropZoneProps {
   label: string
@@ -7,17 +8,15 @@ interface DropZoneProps {
   onFileChange: (file: File | null) => void
 }
 
-function isImage(file: File | null): file is File {
-  return Boolean(file?.type.startsWith('image/'))
-}
-
 export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
   const inputId = useId()
   const [isDragging, setIsDragging] = useState(false)
+  const [isConverting, setIsConverting] = useState(false)
+  const [conversionError, setConversionError] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isImage(file)) {
+    if (!file || !isImageFile(file)) {
       setPreviewUrl(null)
       return
     }
@@ -29,8 +28,27 @@ export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  function selectFile(files: FileList | null) {
-    onFileChange(files?.[0] ?? null)
+  async function handleSelectedFile(rawFile: File | null) {
+    setConversionError(null)
+    if (!rawFile) {
+      onFileChange(null)
+      return
+    }
+
+    if (isHeicFile(rawFile)) {
+      setIsConverting(true)
+      try {
+        const convertedFile = await convertHeicToJpeg(rawFile)
+        onFileChange(convertedFile)
+      } catch {
+        setConversionError('Could not process HEIC image. Please select a JPG or PNG.')
+        onFileChange(null)
+      } finally {
+        setIsConverting(false)
+      }
+    } else {
+      onFileChange(rawFile)
+    }
   }
 
   function handleDragOver(event: DragEvent<HTMLLabelElement>) {
@@ -41,8 +59,11 @@ export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
     event.preventDefault()
     setIsDragging(false)
-    selectFile(event.dataTransfer.files)
+    const droppedFile = event.dataTransfer.files?.[0] ?? null
+    void handleSelectedFile(droppedFile)
   }
+
+  const displayError = error || conversionError
 
   return (
     <div className="drop-zone-field">
@@ -59,20 +80,22 @@ export function DropZone({ label, file, error, onFileChange }: DropZoneProps) {
         tabIndex={0}
       >
         <span>{label}</span>
-        <span className="drop-zone-prompt">Drop an image here or choose a file</span>
+        <span className="drop-zone-prompt">
+          {isConverting ? 'Converting HEIC image...' : 'Drop an image (JPG, PNG, HEIC) here or choose a file'}
+        </span>
         <input
           id={inputId}
           className="visually-hidden"
           type="file"
-          accept="image/*"
-          aria-describedby={error ? `${inputId}-error` : undefined}
-          aria-invalid={Boolean(error)}
-          onChange={(event) => selectFile(event.currentTarget.files)}
+          accept="image/*,.heic,.heif,.HEIC,.HEIF"
+          aria-describedby={displayError ? `${inputId}-error` : undefined}
+          aria-invalid={Boolean(displayError)}
+          onChange={(event) => void handleSelectedFile(event.currentTarget.files?.[0] ?? null)}
         />
         {file && <span className="drop-zone-file">{file.name}</span>}
         {previewUrl && <img className="drop-zone-preview" src={previewUrl} alt={`${label} preview`} />}
       </label>
-      {error && <p id={`${inputId}-error`} className="form-error">{error}</p>}
+      {displayError && <p id={`${inputId}-error`} className="form-error">{displayError}</p>}
     </div>
   )
 }
