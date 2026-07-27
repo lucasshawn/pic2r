@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+
+export type Theme = 'light' | 'dark'
 
 export interface UserProfile {
   email: string
@@ -10,6 +12,11 @@ export interface UserProfile {
 export interface AuthContextType {
   user: UserProfile | null
   isAdmin: boolean
+  theme: Theme
+  customAdminEmails: string[]
+  setTheme: (theme: Theme) => void
+  addAdminEmail: (email: string) => void
+  removeAdminEmail: (email: string) => void
   mockDevLogin: (email: string, name?: string) => void
   loginWithGoogleCredential: (credentialToken: string) => void
   logout: () => void
@@ -17,14 +24,16 @@ export interface AuthContextType {
 
 const STORAGE_KEY = 'pic2r_auth_user'
 
-export function isEmailAdmin(email: string): boolean {
+export function isEmailAdmin(email: string, customAdminEmails: string[] = []): boolean {
   const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS || ''
-  if (!adminEmailsEnv.trim()) return false
   const adminList = adminEmailsEnv
     .split(',')
     .map((e: string) => e.trim().toLowerCase())
     .filter(Boolean)
-  return adminList.includes(email.trim().toLowerCase())
+  const trimmed = email.trim().toLowerCase()
+  if (!trimmed) return false
+  const customList = customAdminEmails.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+  return adminList.includes(trimmed) || customList.includes(trimmed)
 }
 
 function parseJwt(token: string): any {
@@ -46,16 +55,41 @@ function parseJwt(token: string): any {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const stored = localStorage.getItem('pic2r_theme')
+    if (stored === 'dark' || stored === 'light') {
+      return stored
+    }
+    return 'light'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('pic2r_theme', theme)
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+
+  const [customAdminEmails, setCustomAdminEmails] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('pic2r_admin_emails')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          return parsed.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse custom admin emails from localStorage:', e)
+    }
+    return []
+  })
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed && typeof parsed === 'object' && parsed.email) {
-          return {
-            ...parsed,
-            isAdmin: isEmailAdmin(parsed.email),
-          }
+          return parsed
         }
       }
     } catch (e) {
@@ -64,47 +98,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null
   })
 
-  const mockDevLogin = useCallback((email: string, name?: string) => {
-    const emailTrimmed = email.trim()
-    const nameTrimmed = name?.trim() || emailTrimmed.split('@')[0]
-    const isAdmin = isEmailAdmin(emailTrimmed)
-    const profile: UserProfile = {
-      email: emailTrimmed,
-      name: nameTrimmed,
-      isAdmin,
-    }
-    setUser(profile)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+  const addAdminEmail = useCallback((email: string) => {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) return
+    setCustomAdminEmails((prev) => {
+      if (prev.includes(trimmed)) return prev
+      const updated = [...prev, trimmed]
+      localStorage.setItem('pic2r_admin_emails', JSON.stringify(updated))
+      return updated
+    })
   }, [])
 
-  const loginWithGoogleCredential = useCallback((credentialToken: string) => {
-    const payload = parseJwt(credentialToken)
-    const email = (payload.email || '').trim()
-    const name = (payload.name || email.split('@')[0] || 'Google User').trim()
-    const picture = payload.picture
-    const isAdmin = isEmailAdmin(email)
-    const profile: UserProfile = {
-      email,
-      name,
-      picture,
-      isAdmin,
-    }
-    setUser(profile)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+  const removeAdminEmail = useCallback((email: string) => {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) return
+    setCustomAdminEmails((prev) => {
+      const updated = prev.filter((e) => e !== trimmed)
+      localStorage.setItem('pic2r_admin_emails', JSON.stringify(updated))
+      return updated
+    })
   }, [])
+
+  const mockDevLogin = useCallback(
+    (email: string, name?: string) => {
+      const emailTrimmed = email.trim()
+      const nameTrimmed = name?.trim() || emailTrimmed.split('@')[0]
+      const adminStatus = isEmailAdmin(emailTrimmed, customAdminEmails)
+      const profile: UserProfile = {
+        email: emailTrimmed,
+        name: nameTrimmed,
+        isAdmin: adminStatus,
+      }
+      setUser(profile)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+    },
+    [customAdminEmails]
+  )
+
+  const loginWithGoogleCredential = useCallback(
+    (credentialToken: string) => {
+      const payload = parseJwt(credentialToken)
+      const email = (payload.email || '').trim()
+      const name = (payload.name || email.split('@')[0] || 'Google User').trim()
+      const picture = payload.picture
+      const adminStatus = isEmailAdmin(email, customAdminEmails)
+      const profile: UserProfile = {
+        email,
+        name,
+        picture,
+        isAdmin: adminStatus,
+      }
+      setUser(profile)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+    },
+    [customAdminEmails]
+  )
 
   const logout = useCallback(() => {
     setUser(null)
     localStorage.removeItem(STORAGE_KEY)
   }, [])
 
-  const isAdmin = user ? user.isAdmin : false
+  const isAdmin = user ? isEmailAdmin(user.email, customAdminEmails) : false
+  const effectiveUser = user ? { ...user, isAdmin } : null
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: effectiveUser,
         isAdmin,
+        theme,
+        customAdminEmails,
+        setTheme,
+        addAdminEmail,
+        removeAdminEmail,
         mockDevLogin,
         loginWithGoogleCredential,
         logout,
@@ -122,3 +189,4 @@ export function useAuth(): AuthContextType {
   }
   return context
 }
+
