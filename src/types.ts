@@ -8,6 +8,8 @@ export interface PhotoSet {
   id: string
   albumId: string
   name: string
+  description?: string
+  takenAt?: number
   beforeUrl: string
   afterUrl: string
   beforeKey?: string
@@ -40,6 +42,8 @@ export interface SavePhotoSetPayload {
   id?: string
   albumId: string
   name: string
+  description?: string
+  takenAt?: number
   beforeUrl: string
   afterUrl: string
   beforeKey?: string

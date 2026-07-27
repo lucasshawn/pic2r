@@ -1,5 +1,6 @@
 import type { Album, PhotoSet, UploadUrlsResponse } from './types'
 import { convertHeicToJpeg } from './heicHelper'
+import { getPhotoCreationDate } from './exifHelper'
 
 // In-memory fallback for local dev / offline / test environment when server API is unavailable
 const memoryAlbums: Album[] = []
@@ -86,7 +87,15 @@ export async function createPhotoSet(
   name: string,
   before: Blob,
   after: Blob,
+  description?: string,
+  takenAt?: number,
 ): Promise<PhotoSet> {
+  const detectedDate =
+    takenAt ??
+    ((before instanceof File ? await getPhotoCreationDate(before) : null) ||
+      (after instanceof File ? await getPhotoCreationDate(after) : null) ||
+      undefined)
+
   if (before instanceof File) {
     before = await convertHeicToJpeg(before)
   }
@@ -137,6 +146,8 @@ export async function createPhotoSet(
           id: photoSetId,
           albumId,
           name,
+          description,
+          takenAt: detectedDate,
           beforeUrl,
           afterUrl,
           beforeKey,
@@ -155,6 +166,8 @@ export async function createPhotoSet(
     id: crypto.randomUUID(),
     albumId,
     name,
+    description,
+    takenAt: detectedDate,
     beforeUrl: '',
     afterUrl: '',
     before,
@@ -249,6 +262,8 @@ export async function updatePhotoSet(photoSet: PhotoSet): Promise<PhotoSet> {
         id: photoSet.id,
         albumId: photoSet.albumId,
         name: photoSet.name,
+        description: photoSet.description,
+        takenAt: photoSet.takenAt,
         beforeUrl,
         afterUrl,
         beforeKey,
@@ -266,13 +281,13 @@ export async function updatePhotoSet(photoSet: PhotoSet): Promise<PhotoSet> {
   const existing = memoryPhotoSets.get(photoSet.albumId) || []
   const idx = existing.findIndex((s) => s.id === photoSet.id)
   if (idx >= 0) {
-    existing[idx] = photoSet
+    existing[idx] = normalizedPhotoSet
   } else {
-    existing.push(photoSet)
+    existing.push(normalizedPhotoSet)
   }
   memoryPhotoSets.set(photoSet.albumId, existing)
   photoSetAlbumMap.set(photoSet.id, photoSet.albumId)
-  return photoSet
+  return normalizedPhotoSet
 }
 
 export async function deletePhotoSet(id: string, albumId?: string): Promise<void> {
