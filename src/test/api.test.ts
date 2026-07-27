@@ -136,6 +136,34 @@ describe('Netlify API Handler', () => {
       expect(response.statusCode).toBe(200)
       expect(JSON.parse(response.body)).toEqual([])
     })
+
+    test('DELETE /api/albums/:id removes album and associated photo set file', async () => {
+      const albums = [
+        { id: 'alb-1', name: 'Album 1', createdAt: 1000 },
+        { id: 'alb-2', name: 'Album 2', createdAt: 2000 },
+      ]
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(albums)
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce(undefined)
+      vi.mocked(r2.deleteR2Objects).mockResolvedValueOnce(undefined)
+
+      const response = await handler(
+        {
+          httpMethod: 'DELETE',
+          path: '/api/albums/alb-1',
+          headers: {},
+          queryStringParameters: null,
+          body: null,
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual({ success: true })
+      expect(r2.putR2Json).toHaveBeenCalledWith('catalog/albums.json', [
+        { id: 'alb-2', name: 'Album 2', createdAt: 2000 },
+      ])
+      expect(r2.deleteR2Objects).toHaveBeenCalledWith(['albums/alb-1.json'])
+    })
   })
 
   describe('Upload URLs Endpoint', () => {

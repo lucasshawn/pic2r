@@ -99,6 +99,17 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
       return { statusCode: 201, headers: jsonHeaders, body: JSON.stringify(newAlbum) }
     }
 
+    // Match DELETE /api/albums/:albumId
+    const deleteAlbumMatch = path.match(/^\/api\/albums\/([^\/]+)$/)
+    if (event.httpMethod === 'DELETE' && deleteAlbumMatch) {
+      const albumId = deleteAlbumMatch[1]
+      const albums = (await getR2Json<Album[]>('catalog/albums.json')) || []
+      const updatedAlbums = albums.filter((a) => a.id !== albumId)
+      await putR2Json('catalog/albums.json', updatedAlbums)
+      await deleteR2Objects([`albums/${albumId}.json`])
+      return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify({ success: true }) }
+    }
+
     // Match /api/albums/:albumId/photos/upload-urls
     const uploadUrlsMatch = path.match(/^\/api\/albums\/([^\/]+)\/photos\/upload-urls$/)
     if (event.httpMethod === 'POST' && uploadUrlsMatch) {

@@ -2,6 +2,7 @@ import { describe, expect, test, vi, beforeEach } from 'vitest'
 import {
   createAlbum,
   createPhotoSet,
+  deleteAlbum,
   deletePhotoSet,
   listAlbums,
   listPhotoSets,
@@ -173,6 +174,35 @@ describe('catalogRepository with API', () => {
     expect(photoSets[0].after).toBe('/api/image/a1')
     expect(photoSets[0].description).toBe('API Desc')
     expect(photoSets[0].takenAt).toBe(1650000000000)
+  })
+
+  test('deletes album via deleteAlbum', async () => {
+    const album = await createAlbum('Album To Delete')
+    const albumsBefore = await listAlbums()
+    expect(albumsBefore.some((a) => a.id === album.id)).toBe(true)
+
+    await deleteAlbum(album.id)
+    const albumsAfter = await listAlbums()
+    expect(albumsAfter.some((a) => a.id === album.id)).toBe(false)
+  })
+
+  test('calls remote API DELETE endpoint for album', async () => {
+    const deletedIds: string[] = []
+    const globalFetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      if (url.startsWith('/api/albums/') && options?.method === 'DELETE') {
+        const id = url.replace('/api/albums/', '')
+        deletedIds.push(id)
+        return {
+          ok: true,
+          json: async () => ({ success: true }),
+        }
+      }
+      return { ok: false }
+    })
+    vi.stubGlobal('fetch', globalFetch)
+
+    await deleteAlbum('alb-123')
+    expect(deletedIds).toContain('alb-123')
   })
 })
 

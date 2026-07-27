@@ -74,6 +74,13 @@ export async function getAlbum(id: string): Promise<Album | undefined> {
   return albums.find((a) => a.id === id)
 }
 
+export async function deleteAlbum(id: string): Promise<void> {
+  await apiFetch(`/api/albums/${id}`, { method: 'DELETE' })
+  const idx = memoryAlbums.findIndex((a) => a.id === id)
+  if (idx >= 0) memoryAlbums.splice(idx, 1)
+  memoryPhotoSets.delete(id)
+}
+
 export async function listPhotoSets(albumId: string): Promise<PhotoSet[]> {
   const data = await apiFetch<PhotoSet[]>(`/api/albums/${albumId}/photos`)
   if (data !== null) {
