@@ -1,4 +1,4 @@
-# Picture Catalog
+# Before and Afters
 
 ## Deploy with Netlify
 

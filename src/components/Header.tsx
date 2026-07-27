@@ -63,7 +63,7 @@ export function Header() {
   return (
     <header className="app-header">
       <div className="header-brand">
-        <h1 className="header-title">Picture Catalog</h1>
+        <h1 className="header-title">Before and Afters</h1>
       </div>
       <div className="header-auth">
         {user ? (

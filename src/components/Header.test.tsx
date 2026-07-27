@@ -17,14 +17,14 @@ describe('Header Component', () => {
     localStorage.clear()
   })
 
-  it('renders title ("Picture Catalog") and Google Sign-In button when user is logged out', () => {
+  it('renders title ("Before and Afters") and Google Sign-In button when user is logged out', () => {
     render(
       <AuthProvider>
         <Header />
       </AuthProvider>
     )
 
-    expect(screen.getByRole('heading', { name: /picture catalog/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /before and afters/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sign in with google/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument()
   })

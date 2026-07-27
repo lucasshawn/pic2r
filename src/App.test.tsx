@@ -15,9 +15,9 @@ beforeEach(() => {
   )
 })
 
-test('renders the picture catalog heading', async () => {
+test('renders the before and afters heading', async () => {
   render(<App />)
-  expect(screen.getByRole('heading', { name: /picture catalog/i })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: /before and afters/i })).toBeInTheDocument()
   expect(await screen.findByText(/no albums yet/i)).toBeInTheDocument()
 })
 
