@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { PhotoSet } from '../types'
 import { validatePhotoSet } from '../validation'
 import { DropZone } from './DropZone'
+import { convertHeicToJpeg } from '../heicHelper'
 
 interface PhotoSetFormProps {
   initialPhotoSet?: PhotoSet
@@ -46,7 +47,9 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save photo set', 
 
     setIsSaving(true)
     try {
-      await onSave(name.trim(), before, after)
+      const finalBefore = before ? await convertHeicToJpeg(before) : null
+      const finalAfter = after ? await convertHeicToJpeg(after) : null
+      await onSave(name.trim(), finalBefore, finalAfter)
       setName('')
       setBefore(null)
       setAfter(null)

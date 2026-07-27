@@ -1,4 +1,5 @@
 import type { Album, PhotoSet, UploadUrlsResponse } from './types'
+import { convertHeicToJpeg } from './heicHelper'
 
 // In-memory fallback for local dev / offline / test environment when server API is unavailable
 const memoryAlbums: Album[] = []
@@ -86,6 +87,13 @@ export async function createPhotoSet(
   before: Blob,
   after: Blob,
 ): Promise<PhotoSet> {
+  if (before instanceof File) {
+    before = await convertHeicToJpeg(before)
+  }
+  if (after instanceof File) {
+    after = await convertHeicToJpeg(after)
+  }
+
   // Step 1: Request pre-signed URLs
   const uploadUrlsRes = await apiFetch<UploadUrlsResponse>(
     `/api/albums/${albumId}/photos/upload-urls`,
@@ -93,8 +101,8 @@ export async function createPhotoSet(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        beforeFileName: before instanceof File ? before.name : 'before.png',
-        afterFileName: after instanceof File ? after.name : 'after.png',
+        beforeFileName: before instanceof File ? before.name : 'before.jpg',
+        afterFileName: after instanceof File ? after.name : 'after.jpg',
       }),
     },
   )
@@ -161,14 +169,30 @@ export async function createPhotoSet(
 }
 
 export async function updatePhotoSet(photoSet: PhotoSet): Promise<PhotoSet> {
-  let beforeUrl = photoSet.beforeUrl
-  let afterUrl = photoSet.afterUrl
-  let beforeKey = photoSet.beforeKey
-  let afterKey = photoSet.afterKey
+  let updatedBefore = photoSet.before
+  let updatedAfter = photoSet.after
+
+  if (updatedBefore instanceof File) {
+    updatedBefore = await convertHeicToJpeg(updatedBefore)
+  }
+  if (updatedAfter instanceof File) {
+    updatedAfter = await convertHeicToJpeg(updatedAfter)
+  }
+
+  const normalizedPhotoSet: PhotoSet = {
+    ...photoSet,
+    before: updatedBefore,
+    after: updatedAfter,
+  }
+
+  let beforeUrl = normalizedPhotoSet.beforeUrl
+  let afterUrl = normalizedPhotoSet.afterUrl
+  let beforeKey = normalizedPhotoSet.beforeKey
+  let afterKey = normalizedPhotoSet.afterKey
 
   // Check if before or after were updated with new File/Blob objects
-  const hasNewBefore = photoSet.before instanceof Blob
-  const hasNewAfter = photoSet.after instanceof Blob
+  const hasNewBefore = normalizedPhotoSet.before instanceof Blob
+  const hasNewAfter = normalizedPhotoSet.after instanceof Blob
 
   if (hasNewBefore || hasNewAfter) {
     const uploadUrlsRes = await apiFetch<UploadUrlsResponse>(
