@@ -12,16 +12,19 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [albumId, setAlbumId] = useState(() => window.location.hash.replace('#/albums/', ''))
 
+  async function refreshAlbums() {
+    const loadedAlbums = await listAlbums()
+    setAlbums(loadedAlbums)
+  }
+
   useEffect(() => {
-    void listAlbums().then((loadedAlbums) => {
-      setAlbums(loadedAlbums)
-      setIsLoading(false)
-    })
+    void refreshAlbums().finally(() => setIsLoading(false))
   }, [])
 
   useEffect(() => {
     function handleHashChange() {
       setAlbumId(window.location.hash.replace('#/albums/', ''))
+      void refreshAlbums()
     }
 
     window.addEventListener('hashchange', handleHashChange)
@@ -33,6 +36,11 @@ export function App() {
     setAlbums((currentAlbums) => [...currentAlbums, album])
   }
 
+  function handleDeleteAlbum(deletedId: string) {
+    setAlbums((currentAlbums) => currentAlbums.filter((a) => a.id !== deletedId))
+    void refreshAlbums()
+  }
+
   const selectedAlbum = albums.find((album) => album.id === albumId)
 
   return (
@@ -40,7 +48,7 @@ export function App() {
       <Header />
       <main className="app-shell">
         {selectedAlbum ? (
-          <AlbumPage album={selectedAlbum} />
+          <AlbumPage album={selectedAlbum} onDeleteAlbum={handleDeleteAlbum} />
         ) : (
           <CatalogPage albums={albums} isLoading={isLoading} onCreateAlbum={handleCreateAlbum} />
         )}

@@ -8,9 +8,10 @@ import { useAuth } from '../context/AuthContext'
 
 interface AlbumPageProps {
   album: Album
+  onDeleteAlbum?: (albumId: string) => void
 }
 
-export function AlbumPage({ album }: AlbumPageProps) {
+export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
   const { isAdmin } = useAuth()
   const [photoSets, setPhotoSets] = useState<PhotoSet[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -95,6 +96,7 @@ export function AlbumPage({ album }: AlbumPageProps) {
               className="btn-delete-album"
               onClick={async () => {
                 await deleteAlbum(album.id)
+                onDeleteAlbum?.(album.id)
                 window.location.hash = '#/'
               }}
             >
