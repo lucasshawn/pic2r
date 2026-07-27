@@ -101,8 +101,8 @@ export async function createPhotoSet(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        beforeFileName: before instanceof File ? before.name : 'before.jpg',
-        afterFileName: after instanceof File ? after.name : 'after.jpg',
+        beforeFileName: before instanceof File ? before.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'before.jpg',
+        afterFileName: after instanceof File ? after.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'after.jpg',
       }),
     },
   )
