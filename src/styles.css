@@ -69,9 +69,11 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .album-card:hover { border-color: #2358d8; box-shadow: 0 0.25rem 1rem rgb(23 32 51 / 0.1); }
 
-.album-card h3 { margin: 0 0 0.5rem; }
+.album-card h3 { margin: 0 0 0.25rem; }
 
-.album-card span { color: #2358d8; }
+.album-card-description { color: #5d687a; font-size: 0.9rem; line-height: 1.4; margin: 0.25rem 0 0.5rem; }
+
+.album-card span { color: #2358d8; font-weight: 500; }
 
 .photo-set-history { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); margin-top: 1.5rem; }
 
@@ -81,7 +83,7 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .thumbnail-pair h3 { margin: 0; }
 
-.thumbnail-pair-description { color: #5d687a; font-size: 0.9rem; margin-top: 0.25rem; margin-bottom: 0; }
+.thumbnail-pair-description { color: #475569; font-size: 0.925rem; line-height: 1.45; margin-top: 0.35rem; margin-bottom: 0; white-space: pre-wrap; }
 
 .thumbnail-pair-images { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 

@@ -73,8 +73,11 @@ export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
       <div className="page-heading">
         <div>
           <h2 id="album-heading">{album.name}</h2>
-          {album.description && <p className="album-description">{album.description}</p>}
-          <p>Save before-and-after image pairs to this album.</p>
+          {album.description ? (
+            <p className="album-description">{album.description}</p>
+          ) : (
+            <p>Save before-and-after image pairs to this album.</p>
+          )}
         </div>
         {isAdmin && !isAdding && !activeEdit && (
           <div className="album-actions">
