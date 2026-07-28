@@ -50,7 +50,7 @@ export function App() {
       <Header onOpenSettings={() => setIsSettingsOpen(true)} />
       <main className="app-shell">
         {selectedAlbum ? (
-          <AlbumPage album={selectedAlbum} onDeleteAlbum={handleDeleteAlbum} />
+          <AlbumPage album={selectedAlbum} albums={albums} onDeleteAlbum={handleDeleteAlbum} />
         ) : (
           <CatalogPage albums={albums} isLoading={isLoading} onCreateAlbum={handleCreateAlbum} />
         )}

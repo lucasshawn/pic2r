@@ -110,4 +110,65 @@ describe('AlbumPage Component (Read-Only vs Admin)', () => {
     expect(deleteSpy).toHaveBeenCalledWith('alb-1')
     expect(window.location.hash).toBe('#/')
   })
+
+  it('calls reorderPhotoSets when Move Down is clicked', async () => {
+    const user = userEvent.setup()
+    const ps1 = { id: 'ps-1', albumId: 'alb-1', name: 'First', before: 'b1', after: 'a1', createdAt: 1000 }
+    const ps2 = { id: 'ps-2', albumId: 'alb-1', name: 'Second', before: 'b2', after: 'a2', createdAt: 2000 }
+
+    vi.spyOn(catalogRepository, 'listPhotoSets').mockResolvedValue([ps1, ps2])
+    const reorderSpy = vi.spyOn(catalogRepository, 'reorderPhotoSets').mockResolvedValue([ps2, ps1])
+
+    localStorage.setItem(
+      'pic2r_auth_user',
+      JSON.stringify({ email: 'admin@example.com', name: 'Admin', isAdmin: true })
+    )
+
+    render(
+      <AuthProvider>
+        <AlbumPage album={sampleAlbum} />
+      </AuthProvider>
+    )
+
+    expect(await screen.findByText('First')).toBeInTheDocument()
+    expect(screen.getByText('Second')).toBeInTheDocument()
+
+    const moveDownButtons = screen.getAllByRole('button', { name: 'Move →' })
+    await user.click(moveDownButtons[0])
+
+    expect(reorderSpy).toHaveBeenCalledWith('alb-1', ['ps-2', 'ps-1'])
+  })
+
+  it('opens MovePhotoSetModal and moves photo set to target album', async () => {
+    const user = userEvent.setup()
+    const targetAlbum: Album = { id: 'alb-2', name: 'Bathroom Remodel', createdAt: 2000 }
+    const ps1 = { id: 'ps-1', albumId: 'alb-1', name: 'First', before: 'b1', after: 'a1', createdAt: 1000 }
+
+    vi.spyOn(catalogRepository, 'listPhotoSets').mockResolvedValue([ps1])
+    const moveSpy = vi.spyOn(catalogRepository, 'movePhotoSet').mockResolvedValue(undefined)
+
+    localStorage.setItem(
+      'pic2r_auth_user',
+      JSON.stringify({ email: 'admin@example.com', name: 'Admin', isAdmin: true })
+    )
+
+    render(
+      <AuthProvider>
+        <AlbumPage album={sampleAlbum} albums={[sampleAlbum, targetAlbum]} />
+      </AuthProvider>
+    )
+
+    expect(await screen.findByText('First')).toBeInTheDocument()
+
+    const moveModalBtn = screen.getByRole('button', { name: 'Move to Album...' })
+    await user.click(moveModalBtn)
+
+    expect(screen.getByRole('dialog', { name: 'Move Before & After' })).toBeInTheDocument()
+
+    const confirmMoveBtn = screen.getByRole('button', { name: 'Move' })
+    await user.click(confirmMoveBtn)
+
+    expect(moveSpy).toHaveBeenCalledWith('ps-1', 'alb-1', 'alb-2')
+    expect(screen.queryByText('First')).not.toBeInTheDocument()
+  })
 })

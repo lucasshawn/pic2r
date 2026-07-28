@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
-import { createPhotoSet, deleteAlbum, deletePhotoSet, listPhotoSets, updatePhotoSet } from '../catalogRepository'
+import { createPhotoSet, deleteAlbum, deletePhotoSet, listPhotoSets, movePhotoSet, reorderPhotoSets, updatePhotoSet } from '../catalogRepository'
 import type { Album, PhotoSet } from '../types'
 import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
+import { MovePhotoSetModal } from './MovePhotoSetModal'
 import { PhotoSetForm } from './PhotoSetForm'
 import { ThumbnailPair } from './ThumbnailPair'
 import { useAuth } from '../context/AuthContext'
 
 interface AlbumPageProps {
   album: Album
+  albums?: Album[]
   onDeleteAlbum?: (albumId: string) => void
 }
 
-export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
+export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
   const { isAdmin } = useAuth()
   const [photoSets, setPhotoSets] = useState<PhotoSet[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -20,6 +22,7 @@ export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<PhotoSet | null>(null)
   const [isDeletingAlbum, setIsDeletingAlbum] = useState(false)
+  const [movingPhotoSet, setMovingPhotoSet] = useState<PhotoSet | null>(null)
 
   async function loadPhotoSets() {
     const loadedPhotoSets = await listPhotoSets(album.id)
@@ -65,6 +68,35 @@ export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
     } catch {
       setSaveError('Unable to delete this Before & After.')
     }
+  }
+
+  async function handleMoveUp(index: number) {
+    if (index <= 0) return
+    const newPhotoSets = [...photoSets]
+    const temp = newPhotoSets[index]
+    newPhotoSets[index] = newPhotoSets[index - 1]
+    newPhotoSets[index - 1] = temp
+    setPhotoSets(newPhotoSets)
+    const newOrderedIds = newPhotoSets.map((ps) => ps.id)
+    await reorderPhotoSets(album.id, newOrderedIds)
+  }
+
+  async function handleMoveDown(index: number) {
+    if (index >= photoSets.length - 1) return
+    const newPhotoSets = [...photoSets]
+    const temp = newPhotoSets[index]
+    newPhotoSets[index] = newPhotoSets[index + 1]
+    newPhotoSets[index + 1] = temp
+    setPhotoSets(newPhotoSets)
+    const newOrderedIds = newPhotoSets.map((ps) => ps.id)
+    await reorderPhotoSets(album.id, newOrderedIds)
+  }
+
+  async function handleConfirmMove(targetAlbumId: string) {
+    if (!movingPhotoSet) return
+    await movePhotoSet(movingPhotoSet.id, album.id, targetAlbumId)
+    setPhotoSets((prev) => prev.filter((ps) => ps.id !== movingPhotoSet.id))
+    setMovingPhotoSet(null)
   }
 
   return (
@@ -121,7 +153,7 @@ export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
       {!isLoading && photoSets.length === 0 && <p className="empty-state">No Before & After pairs in this album yet.</p>}
       {photoSets.length > 0 && (
         <div className="photo-set-history">
-          {photoSets.map((photoSet) => (
+          {photoSets.map((photoSet, index) => (
             <ThumbnailPair
               key={photoSet.id}
               photoSet={photoSet}
@@ -130,9 +162,23 @@ export function AlbumPage({ album, onDeleteAlbum }: AlbumPageProps) {
               isPendingDelete={pendingDelete?.id === photoSet.id}
               onConfirmDelete={handleDelete}
               onCancelDelete={() => setPendingDelete(null)}
+              canMoveUp={index > 0}
+              canMoveDown={index < photoSets.length - 1}
+              onMoveUp={() => handleMoveUp(index)}
+              onMoveDown={() => handleMoveDown(index)}
+              onOpenMoveModal={() => setMovingPhotoSet(photoSet)}
             />
           ))}
         </div>
+      )}
+      {movingPhotoSet && (
+        <MovePhotoSetModal
+          photoSet={movingPhotoSet}
+          currentAlbumId={album.id}
+          albums={albums || []}
+          onClose={() => setMovingPhotoSet(null)}
+          onConfirmMove={handleConfirmMove}
+        />
       )}
     </section>
   )

@@ -10,6 +10,11 @@ interface ThumbnailPairProps {
   isPendingDelete?: boolean
   onConfirmDelete?: () => void
   onCancelDelete?: () => void
+  canMoveUp?: boolean
+  canMoveDown?: boolean
+  onMoveUp?: () => void
+  onMoveDown?: () => void
+  onOpenMoveModal?: () => void
 }
 
 function formatDate(timestamp: number): string {
@@ -30,6 +35,11 @@ export function ThumbnailPair({
   isPendingDelete,
   onConfirmDelete,
   onCancelDelete,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onOpenMoveModal,
 }: ThumbnailPairProps) {
   const { isAdmin } = useAuth()
   const [urls, setUrls] = useState<{ before: string; after: string } | null>(null)
@@ -91,8 +101,21 @@ export function ThumbnailPair({
       </footer>
       {isAdmin && (
         <div className="thumbnail-pair-actions">
-          <button type="button" onClick={() => onEdit(photoSet)}>Edit {photoSet.name}</button>
-          <button type="button" onClick={() => onDelete(photoSet)}>Delete {photoSet.name}</button>
+          <button type="button" onClick={onMoveUp} disabled={!canMoveUp}>
+            ← Move
+          </button>
+          <button type="button" onClick={onMoveDown} disabled={!canMoveDown}>
+            Move →
+          </button>
+          <button type="button" onClick={onOpenMoveModal}>
+            Move to Album...
+          </button>
+          <button type="button" onClick={() => onEdit(photoSet)}>
+            Edit {photoSet.name}
+          </button>
+          <button type="button" onClick={() => onDelete(photoSet)}>
+            Delete {photoSet.name}
+          </button>
         </div>
       )}
       {isAdmin && isPendingDelete && onConfirmDelete && onCancelDelete && (

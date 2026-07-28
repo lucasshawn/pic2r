@@ -176,4 +176,44 @@ describe('ThumbnailPair Component', () => {
     expect(screen.getByText('BEFORE')).toBeInTheDocument()
     expect(screen.getByText('AFTER')).toBeInTheDocument()
   })
+
+  it('renders reorder and move buttons with correct disabled state for admin', () => {
+    localStorage.setItem(
+      'pic2r_auth_user',
+      JSON.stringify({ email: 'admin@example.com', name: 'Admin', isAdmin: true })
+    )
+
+    const onMoveUp = vi.fn()
+    const onMoveDown = vi.fn()
+    const onOpenMoveModal = vi.fn()
+
+    render(
+      <AuthProvider>
+        <ThumbnailPair
+          photoSet={photoSet}
+          onEdit={vi.fn()}
+          onDelete={vi.fn()}
+          canMoveUp={false}
+          canMoveDown={true}
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          onOpenMoveModal={onOpenMoveModal}
+        />
+      </AuthProvider>
+    )
+
+    const moveUpBtn = screen.getByRole('button', { name: '← Move' })
+    const moveDownBtn = screen.getByRole('button', { name: 'Move →' })
+    const moveModalBtn = screen.getByRole('button', { name: 'Move to Album...' })
+
+    expect(moveUpBtn).toBeDisabled()
+    expect(moveDownBtn).not.toBeDisabled()
+    expect(moveModalBtn).toBeInTheDocument()
+
+    moveDownBtn.click()
+    expect(onMoveDown).toHaveBeenCalledTimes(1)
+
+    moveModalBtn.click()
+    expect(onOpenMoveModal).toHaveBeenCalledTimes(1)
+  })
 })
