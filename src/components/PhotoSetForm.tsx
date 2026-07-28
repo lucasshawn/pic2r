@@ -41,7 +41,7 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save Before & Aft
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (Object.values(validation).some(Boolean) || (!initialPhotoSet && (!before || !after))) {
+    if (Object.values(validation).some(Boolean) || (!initialPhotoSet && !before)) {
       setErrors(validation)
       return
     }
@@ -84,7 +84,7 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save Before & Aft
         placeholder="Add details about this before & after..."
       />
       <DropZone label="Before" file={before} error={errors.before} onFileChange={(file) => handleFileChange('before', file)} />
-      <DropZone label="After" file={after} error={errors.after} onFileChange={(file) => handleFileChange('after', file)} />
+      <DropZone label="After photo (optional)" file={after} error={errors.after} onFileChange={(file) => handleFileChange('after', file)} />
       <div className="form-actions">
         {onCancel && <button type="button" onClick={onCancel}>Cancel</button>}
         <button type="submit" disabled={isSaving || Object.values(validation).some(Boolean)}>

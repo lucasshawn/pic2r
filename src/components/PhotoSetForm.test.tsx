@@ -57,4 +57,30 @@ describe('PhotoSetForm Component', () => {
       expect.any(File),
     )
   })
+
+  it('allows form submission with name and before photo only', async () => {
+    const user = userEvent.setup()
+    const handleSave = vi.fn().mockResolvedValue(undefined)
+
+    render(<PhotoSetForm onSave={handleSave} />)
+
+    await user.type(screen.getByLabelText(/set name/i), 'Single Photo Set')
+    await user.upload(
+      screen.getByLabelText(/^before/i),
+      new File(['before'], 'before.png', { type: 'image/png' }),
+    )
+
+    const submitButton = screen.getByRole('button', { name: /save before & after/i })
+    expect(submitButton).not.toBeDisabled()
+
+    await user.click(submitButton)
+
+    expect(handleSave).toHaveBeenCalledTimes(1)
+    expect(handleSave).toHaveBeenCalledWith(
+      'Single Photo Set',
+      '',
+      expect.any(File),
+      null,
+    )
+  })
 })
