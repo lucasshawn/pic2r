@@ -223,4 +223,29 @@ describe('AlbumPage Component (Read-Only vs Admin)', () => {
     expect(await screen.findByRole('heading', { name: 'Renovated Kitchen' })).toBeInTheDocument()
     expect(screen.getByText('Updated description')).toBeInTheDocument()
   })
+
+  it('opens PhotoLightboxModal when clicking a thumbnail pair and closes when clicking close button', async () => {
+    const user = userEvent.setup()
+    const ps1 = { id: 'ps-1', albumId: 'alb-1', name: 'Living Room', before: 'b1', after: 'a1', createdAt: 1000 }
+    vi.spyOn(catalogRepository, 'listPhotoSets').mockResolvedValue([ps1])
+
+    const { container } = render(
+      <AuthProvider>
+        <AlbumPage album={sampleAlbum} />
+      </AuthProvider>
+    )
+
+    expect(await screen.findByText('Living Room')).toBeInTheDocument()
+
+    const trigger = container.querySelector('.thumbnail-pair-media-trigger')!
+    await user.click(trigger)
+
+    const lightbox = screen.getByRole('dialog', { name: 'Enlarged Before & After view' })
+    expect(lightbox).toBeInTheDocument()
+
+    const closeBtn = screen.getByRole('button', { name: 'Close enlarged view' })
+    await user.click(closeBtn)
+
+    expect(screen.queryByRole('dialog', { name: 'Enlarged Before & After view' })).not.toBeInTheDocument()
+  })
 })

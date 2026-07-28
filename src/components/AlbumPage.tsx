@@ -4,6 +4,7 @@ import type { Album, PhotoSet } from '../types'
 import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
 import { EditAlbumModal } from './EditAlbumModal'
 import { MovePhotoSetModal } from './MovePhotoSetModal'
+import { PhotoLightboxModal } from './PhotoLightboxModal'
 import { PhotoSetForm } from './PhotoSetForm'
 import { ThumbnailPair } from './ThumbnailPair'
 import { useAuth } from '../context/AuthContext'
@@ -27,6 +28,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum, onUpdateAlbum }: Album
   const [pendingDelete, setPendingDelete] = useState<PhotoSet | null>(null)
   const [isDeletingAlbum, setIsDeletingAlbum] = useState(false)
   const [movingPhotoSet, setMovingPhotoSet] = useState<PhotoSet | null>(null)
+  const [activeLightboxSet, setActiveLightboxSet] = useState<PhotoSet | null>(null)
 
   useEffect(() => {
     setCurrentAlbum(album)
@@ -180,6 +182,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum, onUpdateAlbum }: Album
             <ThumbnailPair
               key={photoSet.id}
               photoSet={photoSet}
+              onSelect={setActiveLightboxSet}
               onEdit={setActiveEdit}
               onDelete={setPendingDelete}
               isPendingDelete={pendingDelete?.id === photoSet.id}
@@ -201,6 +204,12 @@ export function AlbumPage({ album, albums, onDeleteAlbum, onUpdateAlbum }: Album
           albums={albums || []}
           onClose={() => setMovingPhotoSet(null)}
           onConfirmMove={handleConfirmMove}
+        />
+      )}
+      {activeLightboxSet && (
+        <PhotoLightboxModal
+          photoSet={activeLightboxSet}
+          onClose={() => setActiveLightboxSet(null)}
         />
       )}
     </section>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AuthProvider } from '../context/AuthContext'
 import { ThumbnailPair } from './ThumbnailPair'
@@ -221,5 +221,26 @@ describe('ThumbnailPair Component', () => {
 
     moveModalBtn.click()
     expect(onOpenMoveModal).toHaveBeenCalledTimes(1)
+  })
+
+  it('invokes onSelect when media trigger is clicked or activated via keyboard', () => {
+    const onSelect = vi.fn()
+    const { container } = render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={photoSet} onEdit={vi.fn()} onDelete={vi.fn()} onSelect={onSelect} />
+      </AuthProvider>
+    )
+
+    const trigger = container.querySelector('.thumbnail-pair-media-trigger')!
+    expect(trigger).toBeInTheDocument()
+
+    fireEvent.click(trigger)
+    expect(onSelect).toHaveBeenCalledWith(photoSet)
+
+    fireEvent.keyDown(trigger, { key: 'Enter' })
+    expect(onSelect).toHaveBeenCalledWith(photoSet)
+
+    fireEvent.keyDown(trigger, { key: ' ' })
+    expect(onSelect).toHaveBeenCalledWith(photoSet)
   })
 })

@@ -5,6 +5,7 @@ import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
 
 interface ThumbnailPairProps {
   photoSet: PhotoSet
+  onSelect?: (photoSet: PhotoSet) => void
   onEdit: (photoSet: PhotoSet) => void
   onDelete: (photoSet: PhotoSet) => void
   isPendingDelete?: boolean
@@ -30,6 +31,7 @@ function formatDate(timestamp: number): string {
 
 export function ThumbnailPair({
   photoSet,
+  onSelect,
   onEdit,
   onDelete,
   isPendingDelete,
@@ -83,14 +85,27 @@ export function ThumbnailPair({
       <header className="thumbnail-pair-header">
         <h3>{photoSet.name}</h3>
       </header>
-      <div className="thumbnail-pair-images">
-        <div className="image-wrapper">
-          <span className="image-badge">BEFORE</span>
-          <img src={urls.before} alt={`${photoSet.name} before`} />
-        </div>
-        <div className="image-wrapper">
-          <span className="image-badge">AFTER</span>
-          <img src={urls.after} alt={`${photoSet.name} after`} />
+      <div
+        className="thumbnail-pair-media-trigger"
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelect?.(photoSet)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect?.(photoSet)
+          }
+        }}
+      >
+        <div className="thumbnail-pair-images">
+          <div className="image-wrapper">
+            <span className="image-badge">BEFORE</span>
+            <img src={urls.before} alt={`${photoSet.name} before`} />
+          </div>
+          <div className="image-wrapper">
+            <span className="image-badge">AFTER</span>
+            <img src={urls.after} alt={`${photoSet.name} after`} />
+          </div>
         </div>
       </div>
       {photoSet.description && (
