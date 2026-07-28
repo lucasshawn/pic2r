@@ -137,6 +137,54 @@ describe('Netlify API Handler', () => {
       expect(JSON.parse(response.body)).toEqual([])
     })
 
+    test('PUT /api/albums/:id updates album name and description and writes catalog/albums.json', async () => {
+      const albums = [
+        { id: 'alb-1', name: 'Album 1', description: 'Old desc', createdAt: 1000 },
+        { id: 'alb-2', name: 'Album 2', createdAt: 2000 },
+      ]
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(albums)
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce(undefined)
+
+      const response = await handler(
+        {
+          httpMethod: 'PUT',
+          path: '/api/albums/alb-1',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ name: 'Updated Name', description: 'New description' }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      const updated = JSON.parse(response.body)
+      expect(updated.id).toBe('alb-1')
+      expect(updated.name).toBe('Updated Name')
+      expect(updated.description).toBe('New description')
+      expect(r2.putR2Json).toHaveBeenCalledWith('catalog/albums.json', [
+        { id: 'alb-1', name: 'Updated Name', description: 'New description', createdAt: 1000 },
+        { id: 'alb-2', name: 'Album 2', createdAt: 2000 },
+      ])
+    })
+
+    test('PUT /api/albums/:id returns 404 if album not found', async () => {
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce([])
+
+      const response = await handler(
+        {
+          httpMethod: 'PUT',
+          path: '/api/albums/nonexistent',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ name: 'Updated Name' }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(404)
+      expect(JSON.parse(response.body)).toEqual({ error: 'Album Not Found' })
+    })
+
     test('DELETE /api/albums/:id removes album and associated photo set file', async () => {
       const albums = [
         { id: 'alb-1', name: 'Album 1', createdAt: 1000 },

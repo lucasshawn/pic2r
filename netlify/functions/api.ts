@@ -99,6 +99,26 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
       return { statusCode: 201, headers: jsonHeaders, body: JSON.stringify(newAlbum) }
     }
 
+    // Match PUT /api/albums/:albumId
+    const putAlbumMatch = path.match(/^\/api\/albums\/([^\/]+)$/)
+    if (event.httpMethod === 'PUT' && putAlbumMatch) {
+      const albumId = putAlbumMatch[1]
+      const body = event.body ? JSON.parse(event.body) : {}
+      const albums = (await getR2Json<Album[]>('catalog/albums.json')) || []
+      const album = albums.find((a) => a.id === albumId)
+      if (!album) {
+        return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Album Not Found' }) }
+      }
+      if (body.name !== undefined) {
+        album.name = body.name
+      }
+      if (body.description !== undefined) {
+        album.description = body.description
+      }
+      await putR2Json('catalog/albums.json', albums)
+      return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(album) }
+    }
+
     // Match DELETE /api/albums/:albumId
     const deleteAlbumMatch = path.match(/^\/api\/albums\/([^\/]+)$/)
     if (event.httpMethod === 'DELETE' && deleteAlbumMatch) {

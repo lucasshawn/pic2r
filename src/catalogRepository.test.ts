@@ -8,6 +8,7 @@ import {
   listPhotoSets,
   movePhotoSet,
   reorderPhotoSets,
+  updateAlbum,
   updatePhotoSet,
 } from './catalogRepository'
 import { getPhotoCreationDate } from './exifHelper'
@@ -29,6 +30,18 @@ describe('catalogRepository with API', () => {
 
     const albums = await listAlbums()
     expect(albums.some((a) => a.id === album.id && a.description === 'House renovation')).toBe(true)
+  })
+
+  test('updates album name and description via updateAlbum', async () => {
+    const album = await createAlbum('Original Title', 'Original Description')
+    const updated = await updateAlbum(album.id, 'Updated Title', 'New Description')
+    expect(updated.name).toBe('Updated Title')
+    expect(updated.description).toBe('New Description')
+
+    const albums = await listAlbums()
+    const found = albums.find((a) => a.id === album.id)
+    expect(found?.name).toBe('Updated Title')
+    expect(found?.description).toBe('New Description')
   })
 
   test('creates photo set using upload URLs and API save', async () => {
@@ -278,6 +291,30 @@ describe('catalogRepository with API', () => {
       url: '/api/albums/alb-1/photos/ps-1/move',
       method: 'PUT',
       body: { targetAlbumId: 'alb-2' },
+    })
+  })
+
+  test('calls remote API PUT endpoint for updateAlbum', async () => {
+    const requests: { url: string; method?: string; body?: any }[] = []
+    const globalFetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      requests.push({ url, method: options?.method, body: options?.body ? JSON.parse(options.body as string) : undefined })
+      if (url === '/api/albums/alb-999' && options?.method === 'PUT') {
+        return {
+          ok: true,
+          json: async () => ({ id: 'alb-999', name: 'API Updated Album', description: 'API Updated Description', createdAt: 1000 }),
+        }
+      }
+      return { ok: false }
+    })
+    vi.stubGlobal('fetch', globalFetch)
+
+    const updated = await updateAlbum('alb-999', 'API Updated Album', 'API Updated Description')
+    expect(updated.name).toBe('API Updated Album')
+    expect(updated.description).toBe('API Updated Description')
+    expect(requests).toContainEqual({
+      url: '/api/albums/alb-999',
+      method: 'PUT',
+      body: { name: 'API Updated Album', description: 'API Updated Description' },
     })
   })
 })

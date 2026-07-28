@@ -74,6 +74,45 @@ export async function getAlbum(id: string): Promise<Album | undefined> {
   return albums.find((a) => a.id === id)
 }
 
+export async function updateAlbum(id: string, name: string, description?: string): Promise<Album> {
+  const data = await apiFetch<Album>(`/api/albums/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, description }),
+  })
+
+  if (data !== null) {
+    const idx = memoryAlbums.findIndex((a) => a.id === id)
+    if (idx >= 0) {
+      memoryAlbums[idx] = data
+    } else {
+      memoryAlbums.push(data)
+    }
+    return data
+  }
+
+  // Fallback
+  const idx = memoryAlbums.findIndex((a) => a.id === id)
+  if (idx >= 0) {
+    const updatedAlbum: Album = {
+      ...memoryAlbums[idx],
+      name,
+      ...(description !== undefined ? { description } : {}),
+    }
+    memoryAlbums[idx] = updatedAlbum
+    return updatedAlbum
+  }
+
+  const newAlbum: Album = {
+    id,
+    name,
+    description,
+    createdAt: Date.now(),
+  }
+  memoryAlbums.push(newAlbum)
+  return newAlbum
+}
+
 export async function deleteAlbum(id: string): Promise<void> {
   await apiFetch(`/api/albums/${id}`, { method: 'DELETE' })
   const idx = memoryAlbums.findIndex((a) => a.id === id)
