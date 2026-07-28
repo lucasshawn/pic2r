@@ -64,6 +64,8 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
 
   if (!urls) return null
 
+  const isPair = Boolean(urls.after)
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose()
@@ -87,16 +89,22 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
         >
           ✕
         </button>
-        <div className="lightbox-images">
-          <div className="image-wrapper">
-            <span className="image-badge">BEFORE</span>
-            <img src={urls.before} alt={`${photoSet.name} before`} />
+        {isPair ? (
+          <div className="lightbox-images">
+            <div className="image-wrapper">
+              <span className="image-badge">BEFORE</span>
+              <img src={urls.before} alt={`${photoSet.name} before`} />
+            </div>
+            <div className="image-wrapper">
+              <span className="image-badge">AFTER</span>
+              <img src={urls.after} alt={`${photoSet.name} after`} />
+            </div>
           </div>
-          <div className="image-wrapper">
-            <span className="image-badge">AFTER</span>
-            <img src={urls.after} alt={`${photoSet.name} after`} />
+        ) : (
+          <div className="lightbox-single-image">
+            <img src={urls.before} alt={photoSet.name} />
           </div>
-        </div>
+        )}
         <div className="lightbox-info">
           <h3>{photoSet.name}</h3>
           <span className="photo-date">

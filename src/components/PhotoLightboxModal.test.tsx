@@ -49,6 +49,21 @@ describe('PhotoLightboxModal Component', () => {
     expect(afterImg.src).toContain('https://example.com/after.jpg')
   })
 
+  it('renders single photo lightbox modal without BEFORE and AFTER badges when after is missing', () => {
+    const singlePhotoSet: PhotoSet = {
+      ...mockPhotoSet,
+      afterUrl: '',
+      after: undefined,
+    }
+
+    const { container } = render(<PhotoLightboxModal photoSet={singlePhotoSet} onClose={vi.fn()} />)
+
+    expect(screen.queryByText('BEFORE')).not.toBeInTheDocument()
+    expect(screen.queryByText('AFTER')).not.toBeInTheDocument()
+    expect(container.querySelector('.lightbox-single-image')).toBeInTheDocument()
+    expect(screen.getByAltText('Master Kitchen Remodel')).toBeInTheDocument()
+  })
+
   it('renders Blob objects as object URLs', () => {
     const mockBeforeBlob = new Blob(['before-data'], { type: 'image/png' })
     const mockAfterBlob = new Blob(['after-data'], { type: 'image/png' })

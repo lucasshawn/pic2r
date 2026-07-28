@@ -80,6 +80,8 @@ export function ThumbnailPair({
 
   if (!urls) return null
 
+  const isPair = Boolean(urls.after)
+
   return (
     <article className="thumbnail-pair">
       <header className="thumbnail-pair-header">
@@ -97,16 +99,22 @@ export function ThumbnailPair({
           }
         }}
       >
-        <div className="thumbnail-pair-images">
-          <div className="image-wrapper">
-            <span className="image-badge">BEFORE</span>
-            <img src={urls.before} alt={`${photoSet.name} before`} />
+        {isPair ? (
+          <div className="thumbnail-pair-images">
+            <div className="image-wrapper">
+              <span className="image-badge">BEFORE</span>
+              <img src={urls.before} alt={`${photoSet.name} before`} />
+            </div>
+            <div className="image-wrapper">
+              <span className="image-badge">AFTER</span>
+              <img src={urls.after} alt={`${photoSet.name} after`} />
+            </div>
           </div>
-          <div className="image-wrapper">
-            <span className="image-badge">AFTER</span>
-            <img src={urls.after} alt={`${photoSet.name} after`} />
+        ) : (
+          <div className="single-image-wrapper">
+            <img src={urls.before} alt={photoSet.name} />
           </div>
-        </div>
+        )}
       </div>
       {photoSet.description && (
         <div className="thumbnail-pair-caption">

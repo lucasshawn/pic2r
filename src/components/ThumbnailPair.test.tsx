@@ -183,6 +183,28 @@ describe('ThumbnailPair Component', () => {
     expect(screen.getByText('AFTER')).toBeInTheDocument()
   })
 
+  it('renders single photo card without BEFORE and AFTER badges when after is missing', () => {
+    const singlePhotoSet: PhotoSet = {
+      id: 'ps-single',
+      albumId: 'alb-1',
+      name: 'Single Living Room',
+      beforeUrl: 'https://r2.dev/before.png',
+      before: 'https://r2.dev/before.png',
+      createdAt: 1000,
+    }
+
+    const { container } = render(
+      <AuthProvider>
+        <ThumbnailPair photoSet={singlePhotoSet} onEdit={vi.fn()} onDelete={vi.fn()} />
+      </AuthProvider>
+    )
+
+    expect(screen.queryByText('BEFORE')).not.toBeInTheDocument()
+    expect(screen.queryByText('AFTER')).not.toBeInTheDocument()
+    expect(container.querySelector('.single-image-wrapper')).toBeInTheDocument()
+    expect(screen.getByAltText('Single Living Room')).toBeInTheDocument()
+  })
+
   it('renders reorder and move buttons with correct disabled state for admin', () => {
     localStorage.setItem(
       'pic2r_auth_user',
