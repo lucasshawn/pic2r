@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { createPhotoSet, deleteAlbum, deletePhotoSet, listPhotoSets, movePhotoSet, reorderPhotoSets, updatePhotoSet } from '../catalogRepository'
+import { createPhotoSet, deleteAlbum, deletePhotoSet, listPhotoSets, movePhotoSet, reorderPhotoSets, updateAlbum, updatePhotoSet } from '../catalogRepository'
 import type { Album, PhotoSet } from '../types'
 import { DeletePhotoSetDialog } from './DeletePhotoSetDialog'
+import { EditAlbumModal } from './EditAlbumModal'
 import { MovePhotoSetModal } from './MovePhotoSetModal'
 import { PhotoSetForm } from './PhotoSetForm'
 import { ThumbnailPair } from './ThumbnailPair'
@@ -11,21 +12,28 @@ interface AlbumPageProps {
   album: Album
   albums?: Album[]
   onDeleteAlbum?: (albumId: string) => void
+  onUpdateAlbum?: (album: Album) => void
 }
 
-export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
+export function AlbumPage({ album, albums, onDeleteAlbum, onUpdateAlbum }: AlbumPageProps) {
   const { isAdmin } = useAuth()
+  const [currentAlbum, setCurrentAlbum] = useState<Album>(album)
   const [photoSets, setPhotoSets] = useState<PhotoSet[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [saveError, setSaveError] = useState('')
   const [activeEdit, setActiveEdit] = useState<PhotoSet | null>(null)
   const [isAdding, setIsAdding] = useState(false)
+  const [isEditingAlbum, setIsEditingAlbum] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<PhotoSet | null>(null)
   const [isDeletingAlbum, setIsDeletingAlbum] = useState(false)
   const [movingPhotoSet, setMovingPhotoSet] = useState<PhotoSet | null>(null)
 
+  useEffect(() => {
+    setCurrentAlbum(album)
+  }, [album])
+
   async function loadPhotoSets() {
-    const loadedPhotoSets = await listPhotoSets(album.id)
+    const loadedPhotoSets = await listPhotoSets(currentAlbum.id)
     setPhotoSets(loadedPhotoSets)
     setIsLoading(false)
   }
@@ -33,7 +41,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
   useEffect(() => {
     setIsLoading(true)
     void loadPhotoSets()
-  }, [album.id])
+  }, [currentAlbum.id])
 
   async function handleSave(name: string, description: string, before: File | null, after: File | null) {
     setSaveError('')
@@ -48,7 +56,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
         })
         setActiveEdit(null)
       } else if (before && after) {
-        await createPhotoSet(album.id, name, before, after, description)
+        await createPhotoSet(currentAlbum.id, name, before, after, description)
         setIsAdding(false)
       }
       await loadPhotoSets()
@@ -62,7 +70,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
 
     setSaveError('')
     try {
-      await deletePhotoSet(pendingDelete.id, album.id)
+      await deletePhotoSet(pendingDelete.id, currentAlbum.id)
       setPendingDelete(null)
       await loadPhotoSets()
     } catch {
@@ -78,7 +86,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
     newPhotoSets[index - 1] = temp
     setPhotoSets(newPhotoSets)
     const newOrderedIds = newPhotoSets.map((ps) => ps.id)
-    await reorderPhotoSets(album.id, newOrderedIds)
+    await reorderPhotoSets(currentAlbum.id, newOrderedIds)
   }
 
   async function handleMoveDown(index: number) {
@@ -89,12 +97,12 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
     newPhotoSets[index + 1] = temp
     setPhotoSets(newPhotoSets)
     const newOrderedIds = newPhotoSets.map((ps) => ps.id)
-    await reorderPhotoSets(album.id, newOrderedIds)
+    await reorderPhotoSets(currentAlbum.id, newOrderedIds)
   }
 
   async function handleConfirmMove(targetAlbumId: string) {
     if (!movingPhotoSet) return
-    await movePhotoSet(movingPhotoSet.id, album.id, targetAlbumId)
+    await movePhotoSet(movingPhotoSet.id, currentAlbum.id, targetAlbumId)
     setPhotoSets((prev) => prev.filter((ps) => ps.id !== movingPhotoSet.id))
     setMovingPhotoSet(null)
   }
@@ -104,22 +112,37 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
       <a href="#/">← Back to albums</a>
       <div className="page-heading">
         <div>
-          <h2 id="album-heading">{album.name}</h2>
-          {album.description ? (
-            <p className="album-description">{album.description}</p>
+          <h2 id="album-heading">{currentAlbum.name}</h2>
+          {currentAlbum.description ? (
+            <p className="album-description">{currentAlbum.description}</p>
           ) : (
             <p>Save before-and-after image pairs to this album.</p>
           )}
         </div>
         {isAdmin && !isAdding && !activeEdit && (
           <div className="album-actions">
-            <button onClick={() => setIsAdding(true)}>+ Add Before & After</button>
+            <button type="button" onClick={() => setIsEditingAlbum(true)}>
+              Edit Album
+            </button>
+            <button type="button" onClick={() => setIsAdding(true)}>+ Add Before & After</button>
             <button type="button" className="btn-delete-album" onClick={() => setIsDeletingAlbum(true)}>
               Delete Album
             </button>
           </div>
         )}
       </div>
+      {isEditingAlbum && (
+        <EditAlbumModal
+          album={currentAlbum}
+          onClose={() => setIsEditingAlbum(false)}
+          onSave={async (name, description) => {
+            const updated = await updateAlbum(currentAlbum.id, name, description)
+            setCurrentAlbum(updated)
+            onUpdateAlbum?.(updated)
+            setIsEditingAlbum(false)
+          }}
+        />
+      )}
       {isDeletingAlbum && (
         <div className="delete-dialog" role="dialog" aria-modal="true" aria-label="Delete Album">
           <h3>Delete Album</h3>
@@ -130,8 +153,8 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
               type="button"
               className="btn-delete-album"
               onClick={async () => {
-                await deleteAlbum(album.id)
-                onDeleteAlbum?.(album.id)
+                await deleteAlbum(currentAlbum.id)
+                onDeleteAlbum?.(currentAlbum.id)
                 window.location.hash = '#/'
               }}
             >
@@ -174,7 +197,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum }: AlbumPageProps) {
       {movingPhotoSet && (
         <MovePhotoSetModal
           photoSet={movingPhotoSet}
-          currentAlbumId={album.id}
+          currentAlbumId={currentAlbum.id}
           albums={albums || []}
           onClose={() => setMovingPhotoSet(null)}
           onConfirmMove={handleConfirmMove}

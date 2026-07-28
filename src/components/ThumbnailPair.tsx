@@ -82,7 +82,6 @@ export function ThumbnailPair({
     <article className="thumbnail-pair">
       <header className="thumbnail-pair-header">
         <h3>{photoSet.name}</h3>
-        {photoSet.description && <p className="thumbnail-pair-description">{photoSet.description}</p>}
       </header>
       <div className="thumbnail-pair-images">
         <div className="image-wrapper">
@@ -94,6 +93,12 @@ export function ThumbnailPair({
           <img src={urls.after} alt={`${photoSet.name} after`} />
         </div>
       </div>
+      {photoSet.description && (
+        <div className="thumbnail-pair-caption">
+          <span className="caption-title">{photoSet.name}</span>
+          <p className="thumbnail-pair-description">{photoSet.description}</p>
+        </div>
+      )}
       <footer className="thumbnail-pair-footer">
         <span className="photo-date">
           {photoSet.takenAt ? `Taken ${formatDate(photoSet.takenAt)}` : `Created ${formatDate(photoSet.createdAt)}`}

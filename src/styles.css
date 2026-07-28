@@ -130,7 +130,11 @@ button:disabled { cursor: wait; opacity: 0.65; }
 
 .thumbnail-pair h3 { margin: 0; color: var(--text-primary); }
 
-.thumbnail-pair-description { color: var(--text-secondary); font-size: 0.925rem; line-height: 1.45; margin-top: 0.35rem; margin-bottom: 0; white-space: pre-wrap; }
+.thumbnail-pair-caption { margin-top: 0.75rem; line-height: 1.45; }
+
+.caption-title { font-weight: 600; color: var(--text-primary); margin-right: 0.35rem; }
+
+.thumbnail-pair-description { color: var(--text-secondary); font-size: 0.925rem; line-height: 1.45; margin: 0; white-space: pre-wrap; }
 
 .thumbnail-pair-images { display: grid; gap: 0.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 

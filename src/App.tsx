@@ -43,6 +43,12 @@ export function App() {
     void refreshAlbums()
   }
 
+  function handleUpdateAlbum(updatedAlbum: Album) {
+    setAlbums((currentAlbums) =>
+      currentAlbums.map((a) => (a.id === updatedAlbum.id ? updatedAlbum : a))
+    )
+  }
+
   const selectedAlbum = albums.find((album) => album.id === albumId)
 
   return (
@@ -50,7 +56,12 @@ export function App() {
       <Header onOpenSettings={() => setIsSettingsOpen(true)} />
       <main className="app-shell">
         {selectedAlbum ? (
-          <AlbumPage album={selectedAlbum} albums={albums} onDeleteAlbum={handleDeleteAlbum} />
+          <AlbumPage
+            album={selectedAlbum}
+            albums={albums}
+            onDeleteAlbum={handleDeleteAlbum}
+            onUpdateAlbum={handleUpdateAlbum}
+          />
         ) : (
           <CatalogPage albums={albums} isLoading={isLoading} onCreateAlbum={handleCreateAlbum} />
         )}

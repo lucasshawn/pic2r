@@ -15,7 +15,7 @@ describe('AlbumPage Component (Read-Only vs Admin)', () => {
     vi.restoreAllMocks()
   })
 
-  it('hides "+ Add Before & After" and "Delete Album" buttons when user is non-admin', async () => {
+  it('hides "+ Add Before & After", "Edit Album", and "Delete Album" buttons when user is non-admin', async () => {
     localStorage.setItem(
       'pic2r_auth_user',
       JSON.stringify({ email: 'reader@example.com', name: 'Reader', isAdmin: false })
@@ -29,6 +29,7 @@ describe('AlbumPage Component (Read-Only vs Admin)', () => {
 
     expect(await screen.findByRole('heading', { name: 'Kitchen Remodel' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /add before & after/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /edit album/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /delete album/i })).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/set name/i)).not.toBeInTheDocument()
   })
@@ -170,5 +171,56 @@ describe('AlbumPage Component (Read-Only vs Admin)', () => {
 
     expect(moveSpy).toHaveBeenCalledWith('ps-1', 'alb-1', 'alb-2')
     expect(screen.queryByText('First')).not.toBeInTheDocument()
+  })
+
+  it('renders "Edit Album" button for admin, opens EditAlbumModal, and saving updates album and calls onUpdateAlbum', async () => {
+    const user = userEvent.setup()
+    const updateSpy = vi.spyOn(catalogRepository, 'updateAlbum').mockResolvedValue({
+      id: 'alb-1',
+      name: 'Renovated Kitchen',
+      description: 'Updated description',
+      createdAt: 1000,
+    })
+    const onUpdateAlbum = vi.fn()
+
+    localStorage.setItem(
+      'pic2r_auth_user',
+      JSON.stringify({ email: 'admin@example.com', name: 'Admin', isAdmin: true })
+    )
+
+    render(
+      <AuthProvider>
+        <AlbumPage album={sampleAlbum} onUpdateAlbum={onUpdateAlbum} />
+      </AuthProvider>
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Kitchen Remodel' })).toBeInTheDocument()
+    const editBtn = screen.getByRole('button', { name: /edit album/i })
+    expect(editBtn).toBeInTheDocument()
+
+    await user.click(editBtn)
+
+    const dialog = screen.getByRole('dialog', { name: 'Edit Album' })
+    expect(dialog).toBeInTheDocument()
+
+    const nameInput = screen.getByLabelText(/album name/i)
+    await user.clear(nameInput)
+    await user.type(nameInput, 'Renovated Kitchen')
+
+    const descInput = screen.getByLabelText(/description \(optional\)/i)
+    await user.type(descInput, 'Updated description')
+
+    const saveBtn = screen.getByRole('button', { name: 'Save' })
+    await user.click(saveBtn)
+
+    expect(updateSpy).toHaveBeenCalledWith('alb-1', 'Renovated Kitchen', 'Updated description')
+    expect(onUpdateAlbum).toHaveBeenCalledWith({
+      id: 'alb-1',
+      name: 'Renovated Kitchen',
+      description: 'Updated description',
+      createdAt: 1000,
+    })
+    expect(await screen.findByRole('heading', { name: 'Renovated Kitchen' })).toBeInTheDocument()
+    expect(screen.getByText('Updated description')).toBeInTheDocument()
   })
 })

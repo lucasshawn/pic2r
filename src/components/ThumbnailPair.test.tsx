@@ -92,22 +92,27 @@ describe('ThumbnailPair Component', () => {
     expect(screen.getByRole('button', { name: /delete living room/i })).toBeInTheDocument()
   })
 
-  it('renders description when present', () => {
+  it('renders description and caption title below images in Instagram caption layout when present', () => {
     const photoSetWithDesc: PhotoSet = {
       ...photoSet,
       description: 'Renovated in 2024 with new flooring',
     }
 
-    render(
+    const { container } = render(
       <AuthProvider>
         <ThumbnailPair photoSet={photoSetWithDesc} onEdit={vi.fn()} onDelete={vi.fn()} />
       </AuthProvider>
     )
 
     expect(screen.getByText('Renovated in 2024 with new flooring')).toBeInTheDocument()
+    const captionContainer = container.querySelector('.thumbnail-pair-caption')
+    expect(captionContainer).toBeInTheDocument()
+    const captionTitle = container.querySelector('.caption-title')
+    expect(captionTitle).toBeInTheDocument()
+    expect(captionTitle?.textContent).toBe('Living Room')
   })
 
-  it('does not render description element when description is missing', () => {
+  it('does not render description element or caption container when description is missing', () => {
     const { container } = render(
       <AuthProvider>
         <ThumbnailPair photoSet={photoSet} onEdit={vi.fn()} onDelete={vi.fn()} />
@@ -115,6 +120,7 @@ describe('ThumbnailPair Component', () => {
     )
 
     expect(container.querySelector('.thumbnail-pair-description')).not.toBeInTheDocument()
+    expect(container.querySelector('.thumbnail-pair-caption')).not.toBeInTheDocument()
   })
 
   it('renders Created date when takenAt is not provided', () => {
