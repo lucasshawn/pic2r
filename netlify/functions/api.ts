@@ -223,6 +223,8 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
           id: payload.id || crypto.randomUUID(),
           albumId,
           name: payload.name,
+          description: payload.description,
+          takenAt: payload.takenAt,
           beforeUrl,
           afterUrl,
           beforeKey,
