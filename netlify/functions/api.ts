@@ -212,7 +212,7 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
         const beforeUrl = payload.beforeUrl || (beforeKey ? getPublicUrl(beforeKey) : '')
         const afterUrl = payload.afterUrl || (afterKey ? getPublicUrl(afterKey) : '')
 
-        if (!payload.name || (!beforeUrl && !beforeKey) || (!afterUrl && !afterKey)) {
+        if (!payload.name || (!beforeUrl && !beforeKey)) {
           return { statusCode: 400, headers: jsonHeaders, body: JSON.stringify({ error: 'Missing required photo set fields' }) }
         }
 

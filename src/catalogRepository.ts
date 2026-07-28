@@ -26,12 +26,13 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T | null
 function formatPhotoSet(ps: any): PhotoSet {
   const beforeUrl = ps.beforeUrl || (typeof ps.before === 'string' ? ps.before : '')
   const afterUrl = ps.afterUrl || (typeof ps.after === 'string' ? ps.after : '')
+  const after = ps.after || afterUrl || undefined
   const formatted: PhotoSet = {
     ...ps,
     beforeUrl,
     afterUrl,
     before: ps.before ?? beforeUrl,
-    after: ps.after ?? afterUrl,
+    after,
   }
   if (formatted.id && formatted.albumId) {
     photoSetAlbumMap.set(formatted.id, formatted.albumId)
@@ -174,7 +175,7 @@ export async function createPhotoSet(
   albumId: string,
   name: string,
   before: Blob,
-  after: Blob,
+  after?: Blob | null,
   description?: string,
   takenAt?: number,
 ): Promise<PhotoSet> {
@@ -192,15 +193,19 @@ export async function createPhotoSet(
   }
 
   // Step 1: Request pre-signed URLs
+  const uploadUrlsRequest: UploadUrlsRequest = {
+    beforeFileName: before instanceof File ? before.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'before.jpg',
+  }
+  if (after) {
+    uploadUrlsRequest.afterFileName = after instanceof File ? after.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'after.jpg'
+  }
+
   const uploadUrlsRes = await apiFetch<UploadUrlsResponse>(
     `/api/albums/${albumId}/photos/upload-urls`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        beforeFileName: before instanceof File ? before.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'before.jpg',
-        afterFileName: after instanceof File ? after.name.replace(/\.[^/.]+$/, '') + '.jpg' : 'after.jpg',
-      }),
+      body: JSON.stringify(uploadUrlsRequest),
     },
   )
 
@@ -215,7 +220,7 @@ export async function createPhotoSet(
         headers: { 'Content-Type': before.type || 'application/octet-stream' },
       })
     }
-    if (afterUploadUrl) {
+    if (after && afterUploadUrl) {
       await fetch(afterUploadUrl, {
         method: 'PUT',
         body: after,
@@ -259,7 +264,7 @@ export async function createPhotoSet(
     beforeUrl: '',
     afterUrl: '',
     before,
-    after,
+    after: after || undefined,
     createdAt: Date.now(),
   }
   const existing = memoryPhotoSets.get(albumId) || []
@@ -268,6 +273,7 @@ export async function createPhotoSet(
   photoSetAlbumMap.set(newSet.id, albumId)
   return newSet
 }
+
 
 export async function updatePhotoSet(photoSet: PhotoSet): Promise<PhotoSet> {
   let updatedBefore = photoSet.before

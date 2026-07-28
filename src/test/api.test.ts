@@ -235,7 +235,29 @@ describe('Netlify API Handler', () => {
       expect(data.beforeUploadUrl).toBe(`https://signed-upload.com/${data.beforeKey}`)
       expect(data.afterUploadUrl).toBe(`https://signed-upload.com/${data.afterKey}`)
     })
+
+    test('POST /api/albums/:id/photos/upload-urls generates presigned URL for before file only', async () => {
+      const response = await handler(
+        {
+          httpMethod: 'POST',
+          path: '/api/albums/alb-1/photos/upload-urls',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ beforeFileName: 'before.png' }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(data.photoSetId).toBeDefined()
+      expect(data.beforeKey).toMatch(/^albums\/alb-1\/[^\/]+\/before-\d+-before\.png$/)
+      expect(data.afterKey).toBeUndefined()
+      expect(data.beforeUploadUrl).toBe(`https://signed-upload.com/${data.beforeKey}`)
+      expect(data.afterUploadUrl).toBeUndefined()
+    })
   })
+
 
   describe('Photo Sets Endpoints', () => {
     test('GET /api/albums/:id/photos returns photo sets as stored in R2', async () => {
@@ -354,6 +376,38 @@ describe('Netlify API Handler', () => {
       expect(record.afterUrl).toBe('https://r2.com/after.jpg')
       expect(r2.putR2Json).toHaveBeenCalledWith('albums/alb-1.json', [record])
     })
+
+    test('POST /api/albums/:id/photos saves single photo set record without after photo', async () => {
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce([])
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce(undefined)
+
+      const photoSetData = {
+        name: 'Single Photo Record',
+        beforeUrl: 'https://r2.com/before.jpg',
+        beforeKey: 'albums/alb-1/ps-1/before.jpg',
+      }
+
+      const response = await handler(
+        {
+          httpMethod: 'POST',
+          path: '/api/albums/alb-1/photos',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify(photoSetData),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      const record = JSON.parse(response.body)
+      expect(record.id).toBeDefined()
+      expect(record.albumId).toBe('alb-1')
+      expect(record.name).toBe('Single Photo Record')
+      expect(record.beforeUrl).toBe('https://r2.com/before.jpg')
+      expect(record.afterUrl).toBe('')
+      expect(r2.putR2Json).toHaveBeenCalledWith('albums/alb-1.json', [record])
+    })
+
 
     test('POST /api/albums/:id/photos updates existing photo set record if id provided', async () => {
       const existing = [

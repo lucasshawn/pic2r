@@ -56,6 +56,23 @@ describe('catalogRepository with API', () => {
     expect(photoSets.some((ps) => ps.id === photoSet.id)).toBe(true)
   })
 
+  test('creates single photo set without after image', async () => {
+    const album = await createAlbum('Living Room')
+    const beforeBlob = new Blob(['before image'], { type: 'image/png' })
+
+    const photoSet = await createPhotoSet(album.id, 'Single Photo Set', beforeBlob)
+    expect(photoSet.name).toBe('Single Photo Set')
+    expect(photoSet.afterUrl).toBe('')
+    expect(photoSet.after).toBeUndefined()
+
+    const photoSets = await listPhotoSets(album.id)
+    const found = photoSets.find((ps) => ps.id === photoSet.id)
+    expect(found).toBeDefined()
+    expect(found?.afterUrl).toBe('')
+    expect(found?.after).toBeUndefined()
+  })
+
+
   test('creates photo set with description and takenAt', async () => {
     const album = await createAlbum('Patio')
     const beforeBlob = new Blob(['before'], { type: 'image/jpeg' })

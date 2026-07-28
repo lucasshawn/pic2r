@@ -12,18 +12,18 @@ export interface PhotoSet {
   description?: string
   takenAt?: number
   beforeUrl: string
-  afterUrl: string
+  afterUrl?: string
   beforeKey?: string
   afterKey?: string
   before: Blob | string
-  after: Blob | string
+  after?: Blob | string
   createdAt: number
 }
 
 export interface PhotoSetInput {
   name: string
-  before: File | null
-  after: File | null
+  before: File | Blob | string | null
+  after?: File | Blob | string | null
 }
 
 export interface UploadUrlsRequest {
@@ -46,8 +46,9 @@ export interface SavePhotoSetPayload {
   description?: string
   takenAt?: number
   beforeUrl: string
-  afterUrl: string
+  afterUrl?: string
   beforeKey?: string
   afterKey?: string
   createdAt?: number
 }
+

@@ -11,14 +11,14 @@ export function validatePhotoSet(input: PhotoSetInput): Record<string, string> {
   if (!input.name.trim()) errors.name = 'Enter a name for this set.'
   if (!input.before) {
     errors.before = 'Choose a before image.'
-  } else if (!isImageFile(input.before)) {
+  } else if (typeof input.before !== 'string' && !isImageFile(input.before as File)) {
     errors.before = 'Choose an image file.'
   }
-  if (!input.after) {
-    errors.after = 'Choose an after image.'
-  } else if (!isImageFile(input.after)) {
+
+  if (input.after && typeof input.after !== 'string' && !isImageFile(input.after as File)) {
     errors.after = 'Choose an image file.'
   }
 
   return errors
 }
+
