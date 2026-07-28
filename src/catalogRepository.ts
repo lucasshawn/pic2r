@@ -84,10 +84,51 @@ export async function deleteAlbum(id: string): Promise<void> {
 export async function listPhotoSets(albumId: string): Promise<PhotoSet[]> {
   const data = await apiFetch<PhotoSet[]>(`/api/albums/${albumId}/photos`)
   if (data !== null) {
-    return data.map(formatPhotoSet).sort((a, b) => a.createdAt - b.createdAt)
+    return data.map(formatPhotoSet)
   }
   const sets = memoryPhotoSets.get(albumId) || []
-  return [...sets].map(formatPhotoSet).sort((a, b) => a.createdAt - b.createdAt)
+  return [...sets].map(formatPhotoSet)
+}
+
+export async function reorderPhotoSets(albumId: string, photoSetIds: string[]): Promise<PhotoSet[]> {
+  const data = await apiFetch<PhotoSet[]>(`/api/albums/${albumId}/photos/reorder`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ photoSetIds }),
+  })
+
+  if (data !== null) {
+    const formatted = data.map(formatPhotoSet)
+    memoryPhotoSets.set(albumId, formatted)
+    return formatted
+  }
+
+  const existing = memoryPhotoSets.get(albumId) || []
+  const reordered = photoSetIds.map((id) => existing.find((p) => p.id === id)).filter(Boolean) as PhotoSet[]
+  memoryPhotoSets.set(albumId, reordered)
+  return reordered.map(formatPhotoSet)
+}
+
+export async function movePhotoSet(photoSetId: string, sourceAlbumId: string, targetAlbumId: string): Promise<void> {
+  await apiFetch(`/api/albums/${sourceAlbumId}/photos/${photoSetId}/move`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetAlbumId }),
+  })
+
+  const sourceList = memoryPhotoSets.get(sourceAlbumId) || []
+  const itemToMove = sourceList.find((ps) => ps.id === photoSetId)
+  if (itemToMove) {
+    memoryPhotoSets.set(
+      sourceAlbumId,
+      sourceList.filter((ps) => ps.id !== photoSetId),
+    )
+    const movedItem: PhotoSet = { ...itemToMove, albumId: targetAlbumId }
+    const targetList = memoryPhotoSets.get(targetAlbumId) || []
+    targetList.push(movedItem)
+    memoryPhotoSets.set(targetAlbumId, targetList)
+  }
+  photoSetAlbumMap.set(photoSetId, targetAlbumId)
 }
 
 export async function createPhotoSet(

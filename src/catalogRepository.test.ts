@@ -6,6 +6,8 @@ import {
   deletePhotoSet,
   listAlbums,
   listPhotoSets,
+  movePhotoSet,
+  reorderPhotoSets,
   updatePhotoSet,
 } from './catalogRepository'
 import { getPhotoCreationDate } from './exifHelper'
@@ -203,6 +205,80 @@ describe('catalogRepository with API', () => {
 
     await deleteAlbum('alb-123')
     expect(deletedIds).toContain('alb-123')
+  })
+
+  test('reorders photo sets in repository', async () => {
+    const album = await createAlbum('Reorder Album')
+    const b = new Blob(['b'], { type: 'image/png' })
+    const a = new Blob(['a'], { type: 'image/png' })
+
+    const ps1 = await createPhotoSet(album.id, 'Set 1', b, a)
+    const ps2 = await createPhotoSet(album.id, 'Set 2', b, a)
+    const ps3 = await createPhotoSet(album.id, 'Set 3', b, a)
+
+    const reordered = await reorderPhotoSets(album.id, [ps3.id, ps1.id, ps2.id])
+    expect(reordered.map((s) => s.id)).toEqual([ps3.id, ps1.id, ps2.id])
+
+    const photoSets = await listPhotoSets(album.id)
+    expect(photoSets.map((s) => s.id)).toEqual([ps3.id, ps1.id, ps2.id])
+  })
+
+  test('moves photo set between albums in repository', async () => {
+    const album1 = await createAlbum('Source Album')
+    const album2 = await createAlbum('Target Album')
+    const b = new Blob(['b'], { type: 'image/png' })
+    const a = new Blob(['a'], { type: 'image/png' })
+
+    const ps1 = await createPhotoSet(album1.id, 'Move Set', b, a)
+
+    await movePhotoSet(ps1.id, album1.id, album2.id)
+
+    const sets1 = await listPhotoSets(album1.id)
+    expect(sets1.some((s) => s.id === ps1.id)).toBe(false)
+
+    const sets2 = await listPhotoSets(album2.id)
+    const moved = sets2.find((s) => s.id === ps1.id)
+    expect(moved).toBeDefined()
+    expect(moved?.albumId).toBe(album2.id)
+  })
+
+  test('calls remote API endpoints for reorderPhotoSets and movePhotoSet', async () => {
+    const requests: { url: string; method?: string; body?: any }[] = []
+    const globalFetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      requests.push({ url, method: options?.method, body: options?.body ? JSON.parse(options.body as string) : undefined })
+      if (url.endsWith('/reorder')) {
+        return {
+          ok: true,
+          json: async () => [
+            { id: 'ps-2', albumId: 'alb-1', name: 'Set 2' },
+            { id: 'ps-1', albumId: 'alb-1', name: 'Set 1' },
+          ],
+        }
+      }
+      if (url.endsWith('/move')) {
+        return {
+          ok: true,
+          json: async () => ({ success: true }),
+        }
+      }
+      return { ok: false }
+    })
+    vi.stubGlobal('fetch', globalFetch)
+
+    const reordered = await reorderPhotoSets('alb-1', ['ps-2', 'ps-1'])
+    expect(reordered.length).toBe(2)
+    expect(requests).toContainEqual({
+      url: '/api/albums/alb-1/photos/reorder',
+      method: 'PUT',
+      body: { photoSetIds: ['ps-2', 'ps-1'] },
+    })
+
+    await movePhotoSet('ps-1', 'alb-1', 'alb-2')
+    expect(requests).toContainEqual({
+      url: '/api/albums/alb-1/photos/ps-1/move',
+      method: 'PUT',
+      body: { targetAlbumId: 'alb-2' },
+    })
   })
 })
 

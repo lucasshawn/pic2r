@@ -135,6 +135,45 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
       return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(result) }
     }
 
+    // Match PUT /api/albums/:albumId/photos/reorder
+    const reorderMatch = path.match(/^\/api\/albums\/([^\/]+)\/photos\/reorder$/)
+    if (event.httpMethod === 'PUT' && reorderMatch) {
+      const albumId = reorderMatch[1]
+      const body = event.body ? JSON.parse(event.body) : {}
+      const photoSetIds: string[] = body.photoSetIds || []
+      const key = `albums/${albumId}.json`
+      const existing = (await getR2Json<any[]>(key)) || []
+      const reordered = photoSetIds.map((id) => existing.find((p) => p.id === id)).filter(Boolean)
+      await putR2Json(key, reordered)
+      return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(reordered) }
+    }
+
+    // Match PUT /api/albums/:sourceAlbumId/photos/:photoSetId/move
+    const moveMatch = path.match(/^\/api\/albums\/([^\/]+)\/photos\/([^\/]+)\/move$/)
+    if (event.httpMethod === 'PUT' && moveMatch) {
+      const sourceAlbumId = moveMatch[1]
+      const photoSetId = moveMatch[2]
+      const body = event.body ? JSON.parse(event.body) : {}
+      const targetAlbumId = body.targetAlbumId
+
+      const sourceKey = `albums/${sourceAlbumId}.json`
+      const targetKey = `albums/${targetAlbumId}.json`
+
+      const sourceList = (await getR2Json<any[]>(sourceKey)) || []
+      const targetList = (await getR2Json<any[]>(targetKey)) || []
+
+      const itemToMove = sourceList.find((p) => p.id === photoSetId)
+      if (itemToMove) {
+        const updatedSource = sourceList.filter((p) => p.id !== photoSetId)
+        const movedItem = { ...itemToMove, albumId: targetAlbumId }
+        targetList.push(movedItem)
+        await putR2Json(sourceKey, updatedSource)
+        await putR2Json(targetKey, targetList)
+      }
+
+      return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify({ success: true }) }
+    }
+
     // Match /api/albums/:albumId/photos (GET or POST)
     const albumPhotosMatch = path.match(/^\/api\/albums\/([^\/]+)\/photos$/)
     if (albumPhotosMatch) {
@@ -143,7 +182,6 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
 
       if (event.httpMethod === 'GET') {
         const photoSets = (await getR2Json<any[]>(key)) || []
-        photoSets.sort((a, b) => a.createdAt - b.createdAt)
         return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(photoSets) }
       }
       if (event.httpMethod === 'POST') {

@@ -190,7 +190,7 @@ describe('Netlify API Handler', () => {
   })
 
   describe('Photo Sets Endpoints', () => {
-    test('GET /api/albums/:id/photos returns photo sets sorted by createdAt', async () => {
+    test('GET /api/albums/:id/photos returns photo sets as stored in R2', async () => {
       const photoSets = [
         { id: 'ps-2', albumId: 'alb-1', name: 'Set 2', createdAt: 200 },
         { id: 'ps-1', albumId: 'alb-1', name: 'Set 1', createdAt: 100 },
@@ -210,10 +210,68 @@ describe('Netlify API Handler', () => {
 
       expect(response.statusCode).toBe(200)
       expect(JSON.parse(response.body)).toEqual([
-        { id: 'ps-1', albumId: 'alb-1', name: 'Set 1', createdAt: 100 },
         { id: 'ps-2', albumId: 'alb-1', name: 'Set 2', createdAt: 200 },
+        { id: 'ps-1', albumId: 'alb-1', name: 'Set 1', createdAt: 100 },
       ])
       expect(r2.getR2Json).toHaveBeenCalledWith('albums/alb-1.json')
+    })
+
+    test('PUT /api/albums/:id/photos/reorder reorders photo sets and persists to R2', async () => {
+      const existing = [
+        { id: 'ps-1', albumId: 'alb-1', name: 'Set 1' },
+        { id: 'ps-2', albumId: 'alb-1', name: 'Set 2' },
+        { id: 'ps-3', albumId: 'alb-1', name: 'Set 3' },
+      ]
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(existing)
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce()
+
+      const response = await handler(
+        {
+          httpMethod: 'PUT',
+          path: '/api/albums/alb-1/photos/reorder',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ photoSetIds: ['ps-3', 'ps-1', 'ps-2'] }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(data.map((ps: any) => ps.id)).toEqual(['ps-3', 'ps-1', 'ps-2'])
+      expect(r2.putR2Json).toHaveBeenCalledWith('albums/alb-1.json', [existing[2], existing[0], existing[1]])
+    })
+
+    test('PUT /api/albums/:sourceAlbumId/photos/:photoSetId/move moves photo set to target album', async () => {
+      const sourceList = [
+        { id: 'ps-1', albumId: 'alb-1', name: 'Set 1' },
+        { id: 'ps-2', albumId: 'alb-1', name: 'Set 2' },
+      ]
+      const targetList = [{ id: 'ps-3', albumId: 'alb-2', name: 'Set 3' }]
+
+      vi.mocked(r2.getR2Json)
+        .mockResolvedValueOnce(sourceList)
+        .mockResolvedValueOnce(targetList)
+      vi.mocked(r2.putR2Json).mockResolvedValue()
+
+      const response = await handler(
+        {
+          httpMethod: 'PUT',
+          path: '/api/albums/alb-1/photos/ps-1/move',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ targetAlbumId: 'alb-2' }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual({ success: true })
+      expect(r2.putR2Json).toHaveBeenCalledWith('albums/alb-1.json', [sourceList[1]])
+      expect(r2.putR2Json).toHaveBeenCalledWith('albums/alb-2.json', [
+        targetList[0],
+        { id: 'ps-1', albumId: 'alb-2', name: 'Set 1' },
+      ])
     })
 
     test('POST /api/albums/:id/photos saves new photo set record', async () => {
