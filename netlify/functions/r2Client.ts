@@ -94,7 +94,7 @@ export async function generatePresignedPutUrl(key: string, contentType?: string)
   const command = new PutObjectCommand({
     Bucket: getBucketName(),
     Key: key,
-    ContentType: contentType || 'application/octet-stream',
+    ...(contentType ? { ContentType: contentType } : {}),
   })
   return getSignedUrl(client, command, { expiresIn: 3600 })
 }

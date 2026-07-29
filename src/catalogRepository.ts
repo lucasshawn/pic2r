@@ -216,22 +216,28 @@ export async function createPhotoSet(
 
     // Direct PUT upload to R2
     if (beforeUploadUrl) {
-      await fetch(beforeUploadUrl, {
+      const beforeRes = await fetch(beforeUploadUrl, {
         method: 'PUT',
         body: before,
         headers: { 'Content-Type': before.type || 'application/octet-stream' },
       })
+      if (!beforeRes.ok) {
+        console.error('Failed to upload before image:', beforeRes.status, beforeRes.statusText)
+      }
     }
     if (after && afterUploadUrl) {
-      await fetch(afterUploadUrl, {
+      const afterRes = await fetch(afterUploadUrl, {
         method: 'PUT',
         body: after,
         headers: { 'Content-Type': after.type || 'application/octet-stream' },
       })
+      if (!afterRes.ok) {
+        console.error('Failed to upload after image:', afterRes.status, afterRes.statusText)
+      }
     }
 
     const beforeUrl = beforeKey ? `/api/image/${beforeKey}` : ''
-    const afterUrl = afterKey ? `/api/image/${afterKey}` : ''
+    const afterUrl = (after && afterKey) ? `/api/image/${afterKey}` : ''
 
     const saveRes = await apiFetch<PhotoSet>(`/api/albums/${albumId}/photos`, {
       method: 'POST',
