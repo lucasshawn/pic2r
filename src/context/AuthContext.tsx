@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { listCustomAdminEmails, addCustomAdminEmail, removeCustomAdminEmail } from '../catalogRepository'
 
 export type Theme = 'light' | 'dark'
 
@@ -15,10 +16,10 @@ export interface AuthContextType {
   theme: Theme
   customAdminEmails: string[]
   setTheme: (theme: Theme) => void
-  addAdminEmail: (email: string) => void
-  removeAdminEmail: (email: string) => void
+  addAdminEmail: (email: string) => Promise<void> | void
+  removeAdminEmail: (email: string) => Promise<void> | void
   mockDevLogin: (email: string, name?: string) => void
-  loginWithGoogleCredential: (credentialToken: string) => void
+  loginWithGoogleCredential: (credentialToken: string) => Promise<void> | void
   logout: () => void
 }
 
@@ -83,6 +84,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return []
   })
 
+  useEffect(() => {
+    let isMounted = true
+    listCustomAdminEmails()
+      .then((emails) => {
+        if (!isMounted) return
+        const cleaned = emails.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+        setCustomAdminEmails(cleaned)
+        localStorage.setItem('pic2r_admin_emails', JSON.stringify(cleaned))
+      })
+      .catch((e) => {
+        console.error('Failed to fetch custom admin emails on mount:', e)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   const [user, setUser] = useState<UserProfile | null>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -98,25 +116,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null
   })
 
-  const addAdminEmail = useCallback((email: string) => {
+  const addAdminEmail = useCallback(async (email: string) => {
     const trimmed = email.trim().toLowerCase()
     if (!trimmed) return
-    setCustomAdminEmails((prev) => {
-      if (prev.includes(trimmed)) return prev
-      const updated = [...prev, trimmed]
-      localStorage.setItem('pic2r_admin_emails', JSON.stringify(updated))
-      return updated
-    })
+    try {
+      const updated = await addCustomAdminEmail(trimmed)
+      const cleaned = updated.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+      setCustomAdminEmails(cleaned)
+      localStorage.setItem('pic2r_admin_emails', JSON.stringify(cleaned))
+    } catch (e) {
+      console.error('Failed to add custom admin email:', e)
+    }
   }, [])
 
-  const removeAdminEmail = useCallback((email: string) => {
+  const removeAdminEmail = useCallback(async (email: string) => {
     const trimmed = email.trim().toLowerCase()
     if (!trimmed) return
-    setCustomAdminEmails((prev) => {
-      const updated = prev.filter((e) => e !== trimmed)
-      localStorage.setItem('pic2r_admin_emails', JSON.stringify(updated))
-      return updated
-    })
+    try {
+      const updated = await removeCustomAdminEmail(trimmed)
+      const cleaned = updated.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+      setCustomAdminEmails(cleaned)
+      localStorage.setItem('pic2r_admin_emails', JSON.stringify(cleaned))
+    } catch (e) {
+      console.error('Failed to remove custom admin email:', e)
+    }
   }, [])
 
   const mockDevLogin = useCallback(
@@ -136,12 +159,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   )
 
   const loginWithGoogleCredential = useCallback(
-    (credentialToken: string) => {
+    async (credentialToken: string) => {
       const payload = parseJwt(credentialToken)
       const email = (payload.email || '').trim()
       const name = (payload.name || email.split('@')[0] || 'Google User').trim()
       const picture = payload.picture
-      const adminStatus = isEmailAdmin(email, customAdminEmails)
+
+      let currentCustomEmails = customAdminEmails
+      try {
+        const fetchedEmails = await listCustomAdminEmails()
+        const cleaned = fetchedEmails.map((e: string) => e.trim().toLowerCase()).filter(Boolean)
+        setCustomAdminEmails(cleaned)
+        localStorage.setItem('pic2r_admin_emails', JSON.stringify(cleaned))
+        currentCustomEmails = cleaned
+      } catch (e) {
+        console.error('Failed to fetch custom admin emails on login:', e)
+      }
+
+      const adminStatus = isEmailAdmin(email, currentCustomEmails)
       const profile: UserProfile = {
         email,
         name,

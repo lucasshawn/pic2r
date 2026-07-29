@@ -1,6 +1,7 @@
 import { render, screen, act } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { AuthProvider, useAuth, UserProfile } from './AuthContext'
+import * as catalogRepo from '../catalogRepository'
 
 // Test helper component to consume useAuth
 function TestConsumer() {
@@ -39,6 +40,24 @@ function TestConsumer() {
       >
         Google Login
       </button>
+      <button
+        data-testid="btn-login-r2-jwt"
+        onClick={() => {
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+          const payload = btoa(
+            JSON.stringify({
+              email: 'r2admin@example.com',
+              name: 'R2 Admin User',
+            })
+          )
+            .replace(/=/g, '')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+          loginWithGoogleCredential(`${header}.${payload}.signature`)
+        }}
+      >
+        Google Login R2 Admin
+      </button>
       <button data-testid="btn-set-theme-dark" onClick={() => setTheme('dark')}>
         Set Dark Theme
       </button>
@@ -59,39 +78,45 @@ describe('AuthContext', () => {
   const originalEnv = import.meta.env.VITE_ADMIN_EMAILS
 
   beforeEach(() => {
+    catalogRepo.resetMemoryCatalog()
     localStorage.clear()
     document.documentElement.removeAttribute('data-theme')
     import.meta.env.VITE_ADMIN_EMAILS = 'admin@example.com, superuser@example.com'
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     import.meta.env.VITE_ADMIN_EMAILS = originalEnv
     localStorage.clear()
     document.documentElement.removeAttribute('data-theme')
   })
 
-  it('provides default state with null user and isAdmin: false', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('provides default state with null user and isAdmin: false', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
     expect(screen.getByTestId('user').textContent).toBe('null')
     expect(screen.getByTestId('is-admin').textContent).toBe('false')
   })
 
-  it('evaluates VITE_ADMIN_EMAILS case-insensitively and trimmed during mockDevLogin', () => {
+  it('evaluates VITE_ADMIN_EMAILS case-insensitively and trimmed during mockDevLogin', async () => {
     import.meta.env.VITE_ADMIN_EMAILS = ' admin@example.com , SUPERUSER@EXAMPLE.COM '
 
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
     // Login as admin
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-dev').click()
     })
 
@@ -101,7 +126,7 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('is-admin').textContent).toBe('true')
 
     // Login as non-admin
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-nonadmin').click()
     })
 
@@ -111,14 +136,16 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('is-admin').textContent).toBe('false')
   })
 
-  it('persists user profile session in localStorage under pic2r_auth_user', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('persists user profile session in localStorage under pic2r_auth_user', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-dev').click()
     })
 
@@ -129,7 +156,7 @@ describe('AuthContext', () => {
     expect(parsed.isAdmin).toBe(true)
   })
 
-  it('initializes from localStorage on mount if pic2r_auth_user is present', () => {
+  it('initializes from localStorage on mount if pic2r_auth_user is present', async () => {
     const initialUser: UserProfile = {
       email: 'superuser@example.com',
       name: 'Super User',
@@ -137,24 +164,28 @@ describe('AuthContext', () => {
     }
     localStorage.setItem('pic2r_auth_user', JSON.stringify(initialUser))
 
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
     expect(screen.getByTestId('user').textContent).toContain('superuser@example.com')
     expect(screen.getByTestId('is-admin').textContent).toBe('true')
   })
 
-  it('decodes Google JWT token credential in loginWithGoogleCredential', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('decodes Google JWT token credential in loginWithGoogleCredential', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-jwt').click()
     })
 
@@ -165,19 +196,21 @@ describe('AuthContext', () => {
     expect(userObj.isAdmin).toBe(true)
   })
 
-  it('clears user state and localStorage on logout', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('clears user state and localStorage on logout', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-dev').click()
     })
     expect(localStorage.getItem('pic2r_auth_user')).not.toBeNull()
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-logout').click()
     })
 
@@ -186,22 +219,24 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('pic2r_auth_user')).toBeNull()
   })
 
-  it('addAdminEmail adds email and grants isAdmin === true when logged in with that email', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('addAdminEmail adds email and grants isAdmin === true when logged in with that email', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
     // Initially log in with customadmin@example.com (not in VITE_ADMIN_EMAILS)
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-login-custom').click()
     })
 
     expect(screen.getByTestId('is-admin').textContent).toBe('false')
 
     // Add email to custom admin list
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-add-admin').click()
     })
 
@@ -212,30 +247,75 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('pic2r_admin_emails')).toContain('customadmin@example.com')
 
     // Remove email from custom admin list
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-remove-admin').click()
     })
 
     expect(screen.getByTestId('is-admin').textContent).toBe('false')
   })
 
-  it('setTheme("dark") updates theme state and sets data-theme="dark" attribute on document.documentElement', () => {
-    render(
-      <AuthProvider>
-        <TestConsumer />
-      </AuthProvider>
-    )
+  it('setTheme("dark") updates theme state and sets data-theme="dark" attribute on document.documentElement', async () => {
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
 
     expect(screen.getByTestId('theme').textContent).toBe('light')
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
 
-    act(() => {
+    await act(async () => {
       screen.getByTestId('btn-set-theme-dark').click()
     })
 
     expect(screen.getByTestId('theme').textContent).toBe('dark')
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
     expect(localStorage.getItem('pic2r_theme')).toBe('dark')
+  })
+
+  it('verifies server-persisted admin emails grant isAdmin === true on mount and sign-in', async () => {
+    const listSpy = vi.spyOn(catalogRepo, 'listCustomAdminEmails').mockResolvedValue(['r2admin@example.com'])
+
+    // Pre-populate stored user session with r2admin@example.com
+    const initialUser: UserProfile = {
+      email: 'r2admin@example.com',
+      name: 'R2 Admin User',
+      isAdmin: false, // Initially false until server list resolves on mount
+    }
+    localStorage.setItem('pic2r_auth_user', JSON.stringify(initialUser))
+
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <TestConsumer />
+        </AuthProvider>
+      )
+    })
+
+    // On mount, listCustomAdminEmails was called and updated customAdminEmails state, granting isAdmin: true
+    expect(screen.getByTestId('is-admin').textContent).toBe('true')
+    const userObj: UserProfile = JSON.parse(screen.getByTestId('user').textContent!)
+    expect(userObj.isAdmin).toBe(true)
+    expect(JSON.parse(screen.getByTestId('custom-admin-emails').textContent!)).toContain('r2admin@example.com')
+
+    // Also test Google sign-in for R2 admin email
+    await act(async () => {
+      screen.getByTestId('btn-logout').click()
+    })
+    expect(screen.getByTestId('is-admin').textContent).toBe('false')
+
+    await act(async () => {
+      screen.getByTestId('btn-login-r2-jwt').click()
+    })
+
+    expect(screen.getByTestId('is-admin').textContent).toBe('true')
+    const loginUserObj: UserProfile = JSON.parse(screen.getByTestId('user').textContent!)
+    expect(loginUserObj.email).toBe('r2admin@example.com')
+    expect(loginUserObj.isAdmin).toBe(true)
+
+    listSpy.mockRestore()
   })
 
   it('throws an error if useAuth is used outside AuthProvider', () => {
@@ -245,4 +325,5 @@ describe('AuthContext', () => {
     consoleError.mockRestore()
   })
 })
+
 
