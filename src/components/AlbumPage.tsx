@@ -57,7 +57,7 @@ export function AlbumPage({ album, albums, onDeleteAlbum, onUpdateAlbum }: Album
           after: after ?? activeEdit.after,
         })
         setActiveEdit(null)
-      } else if (before && after) {
+      } else if (before) {
         await createPhotoSet(currentAlbum.id, name, before, after, description)
         setIsAdding(false)
       }

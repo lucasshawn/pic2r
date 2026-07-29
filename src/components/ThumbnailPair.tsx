@@ -45,8 +45,10 @@ export function ThumbnailPair({
 }: ThumbnailPairProps) {
   const { isAdmin } = useAuth()
   const [urls, setUrls] = useState<{ before: string; after: string } | null>(null)
+  const [afterError, setAfterError] = useState(false)
 
   useEffect(() => {
+    setAfterError(false)
     let beforeUrl = ''
     let afterUrl = ''
     let createdBeforeObj = false
@@ -80,7 +82,7 @@ export function ThumbnailPair({
 
   if (!urls) return null
 
-  const isPair = Boolean(urls.after && urls.after.trim() !== '')
+  const isPair = Boolean(urls.after && urls.after.trim() !== '') && !afterError
 
   return (
     <article className="thumbnail-pair">
@@ -107,7 +109,7 @@ export function ThumbnailPair({
             </div>
             <div className="image-wrapper">
               <span className="image-badge">AFTER</span>
-              <img src={urls.after} alt={`${photoSet.name} after`} />
+              <img src={urls.after} alt={`${photoSet.name} after`} onError={() => setAfterError(true)} />
             </div>
           </div>
         ) : (

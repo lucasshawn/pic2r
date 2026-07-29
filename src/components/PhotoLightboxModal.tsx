@@ -30,7 +30,10 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  const [afterError, setAfterError] = useState(false)
+
   useEffect(() => {
+    setAfterError(false)
     let beforeUrl = ''
     let afterUrl = ''
     let createdBeforeObj = false
@@ -64,7 +67,7 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
 
   if (!urls) return null
 
-  const isPair = Boolean(urls.after && urls.after.trim() !== '')
+  const isPair = Boolean(urls.after && urls.after.trim() !== '') && !afterError
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -97,7 +100,7 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
             </div>
             <div className="image-wrapper">
               <span className="image-badge">AFTER</span>
-              <img src={urls.after} alt={`${photoSet.name} after`} />
+              <img src={urls.after} alt={`${photoSet.name} after`} onError={() => setAfterError(true)} />
             </div>
           </div>
         ) : (
