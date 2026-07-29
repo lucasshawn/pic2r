@@ -83,7 +83,7 @@ export function PhotoSetForm({ initialPhotoSet, submitLabel = 'Save Before & Aft
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Add details about this before & after..."
       />
-      <DropZone label="Before" file={before} error={errors.before} onFileChange={(file) => handleFileChange('before', file)} />
+      <DropZone label="Before photo" file={before} error={errors.before} onFileChange={(file) => handleFileChange('before', file)} />
       <DropZone label="After photo (optional)" file={after} error={errors.after} onFileChange={(file) => handleFileChange('after', file)} />
       <div className="form-actions">
         {onCancel && <button type="button" onClick={onCancel}>Cancel</button>}

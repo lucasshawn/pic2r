@@ -141,12 +141,22 @@ button:disabled { cursor: wait; opacity: 0.65; }
 .single-image-wrapper {
   position: relative;
   overflow: hidden;
-  border-radius: 0.4rem;
+  border-radius: 0.6rem;
   width: 100%;
 }
 
+.single-image-wrapper img {
+  width: 100%;
+  height: auto;
+  max-height: 32rem;
+  object-fit: cover;
+  border-radius: 0.6rem;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
 .single-image-wrapper:hover img {
-  transform: scale(1.04);
+  transform: scale(1.03);
 }
 
 .image-wrapper {

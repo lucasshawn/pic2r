@@ -45,9 +45,9 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
       createdBeforeObj = true
     }
 
-    if (typeof photoSet.after === 'string') {
+    if (typeof photoSet.after === 'string' && photoSet.after.trim() !== '') {
       afterUrl = photoSet.after
-    } else if (photoSet.afterUrl) {
+    } else if (photoSet.afterUrl && photoSet.afterUrl.trim() !== '') {
       afterUrl = photoSet.afterUrl
     } else if (photoSet.after instanceof Blob) {
       afterUrl = URL.createObjectURL(photoSet.after)
@@ -64,7 +64,7 @@ export function PhotoLightboxModal({ photoSet, onClose }: PhotoLightboxModalProp
 
   if (!urls) return null
 
-  const isPair = Boolean(urls.after)
+  const isPair = Boolean(urls.after && urls.after.trim() !== '')
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
