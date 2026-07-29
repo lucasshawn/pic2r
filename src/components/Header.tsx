@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 declare global {
@@ -21,21 +21,29 @@ export interface HeaderProps {
 export function Header({ onOpenSettings }: HeaderProps = {}) {
   const { user, isAdmin, loginWithGoogleCredential, logout } = useAuth()
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const loginWithGoogleCredentialRef = useRef(loginWithGoogleCredential)
+
+  useEffect(() => {
+    loginWithGoogleCredentialRef.current = loginWithGoogleCredential
+  }, [loginWithGoogleCredential])
 
   useEffect(() => {
     if (!clientId || typeof window === 'undefined') return
 
+    let isInitialized = false
+
     function renderGoogleBtn() {
-      if (window.google?.accounts?.id) {
+      if (window.google?.accounts?.id && !isInitialized) {
         try {
           window.google.accounts.id.initialize({
             client_id: clientId,
             callback: (response: any) => {
               if (response?.credential) {
-                loginWithGoogleCredential(response.credential)
+                loginWithGoogleCredentialRef.current(response.credential)
               }
             },
           })
+          isInitialized = true
           const btnParent = document.getElementById('google-signin-btn')
           if (btnParent) {
             btnParent.innerHTML = ''
@@ -62,7 +70,7 @@ export function Header({ onOpenSettings }: HeaderProps = {}) {
       }, 100)
       return () => clearInterval(interval)
     }
-  }, [clientId, loginWithGoogleCredential])
+  }, [clientId])
 
   return (
     <header className="app-header">
