@@ -6,11 +6,13 @@ import { getPhotoCreationDate } from './exifHelper'
 const memoryAlbums: Album[] = []
 const memoryPhotoSets: Map<string, PhotoSet[]> = new Map()
 const photoSetAlbumMap: Map<string, string> = new Map()
+const memoryAdminEmails: string[] = []
 
 export function resetMemoryCatalog(): void {
   memoryAlbums.length = 0
   memoryPhotoSets.clear()
   photoSetAlbumMap.clear()
+  memoryAdminEmails.length = 0
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T | null> {
@@ -404,4 +406,46 @@ export async function deletePhotoSet(id: string, albumId?: string): Promise<void
     )
     photoSetAlbumMap.delete(id)
   }
+}
+
+export async function listCustomAdminEmails(): Promise<string[]> {
+  const data = await apiFetch<string[]>('/api/admins')
+  if (data !== null) {
+    memoryAdminEmails.splice(0, memoryAdminEmails.length, ...data)
+    return data
+  }
+  return [...memoryAdminEmails]
+}
+
+export async function addCustomAdminEmail(email: string): Promise<string[]> {
+  const data = await apiFetch<string[]>('/api/admins', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (data !== null) {
+    memoryAdminEmails.splice(0, memoryAdminEmails.length, ...data)
+    return data
+  }
+  const trimmed = email.trim().toLowerCase()
+  if (trimmed && !memoryAdminEmails.includes(trimmed)) {
+    memoryAdminEmails.push(trimmed)
+  }
+  return [...memoryAdminEmails]
+}
+
+export async function removeCustomAdminEmail(email: string): Promise<string[]> {
+  const data = await apiFetch<string[]>(`/api/admins/${encodeURIComponent(email)}`, {
+    method: 'DELETE',
+  })
+  if (data !== null) {
+    memoryAdminEmails.splice(0, memoryAdminEmails.length, ...data)
+    return data
+  }
+  const target = email.trim().toLowerCase()
+  const idx = memoryAdminEmails.findIndex((e) => e.toLowerCase() === target)
+  if (idx >= 0) {
+    memoryAdminEmails.splice(idx, 1)
+  }
+  return [...memoryAdminEmails]
 }

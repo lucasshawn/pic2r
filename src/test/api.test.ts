@@ -507,6 +507,86 @@ describe('Netlify API Handler', () => {
     })
   })
 
+  describe('Admin Email Endpoints', () => {
+    test('GET /api/admins returns empty array when catalog/admins.json is missing', async () => {
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(null)
+
+      const response = await handler(
+        {
+          httpMethod: 'GET',
+          path: '/api/admins',
+          headers: {},
+          queryStringParameters: null,
+          body: null,
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual([])
+      expect(r2.getR2Json).toHaveBeenCalledWith('catalog/admins.json')
+    })
+
+    test('GET /api/admins returns stored admin emails', async () => {
+      const admins = ['admin1@example.com', 'admin2@example.com']
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(admins)
+
+      const response = await handler(
+        {
+          httpMethod: 'GET',
+          path: '/api/admins',
+          headers: {},
+          queryStringParameters: null,
+          body: null,
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual(admins)
+    })
+
+    test('POST /api/admins appends trimmed lowercased email to catalog/admins.json and saves to R2', async () => {
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(['existing@example.com'])
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce(undefined)
+
+      const response = await handler(
+        {
+          httpMethod: 'POST',
+          path: '/api/admins',
+          headers: { 'content-type': 'application/json' },
+          queryStringParameters: null,
+          body: JSON.stringify({ email: '  NewAdmin@Example.com  ' }),
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual(['existing@example.com', 'newadmin@example.com'])
+      expect(r2.putR2Json).toHaveBeenCalledWith('catalog/admins.json', ['existing@example.com', 'newadmin@example.com'])
+    })
+
+    test('DELETE /api/admins/:email removes specified email from catalog/admins.json and saves to R2', async () => {
+      vi.mocked(r2.getR2Json).mockResolvedValueOnce(['admin1@example.com', 'admin2@example.com'])
+      vi.mocked(r2.putR2Json).mockResolvedValueOnce(undefined)
+
+      const response = await handler(
+        {
+          httpMethod: 'DELETE',
+          path: `/api/admins/${encodeURIComponent('admin1@example.com')}`,
+          headers: {},
+          queryStringParameters: null,
+          body: null,
+        } as any,
+        {} as any
+      )
+
+      expect(response.statusCode).toBe(200)
+      expect(JSON.parse(response.body)).toEqual(['admin2@example.com'])
+      expect(r2.putR2Json).toHaveBeenCalledWith('catalog/admins.json', ['admin2@example.com'])
+    })
+  })
+
   describe('404 & 500 error handling', () => {
     test('returns 404 for unmatched routes', async () => {
       const response = await handler(

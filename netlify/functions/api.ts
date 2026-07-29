@@ -72,6 +72,33 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
         return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Image Not Found' }) }
       }
     }
+
+    // Match /api/admins or /api/admins/:email
+    const adminsMatch = path.match(/^\/api\/admins(?:\/(.+))?$/)
+    if (adminsMatch) {
+      const emailParam = adminsMatch[1] ? decodeURIComponent(adminsMatch[1]).trim().toLowerCase() : null
+      const key = 'catalog/admins.json'
+      const admins = (await getR2Json<string[]>(key)) || []
+
+      if (event.httpMethod === 'GET') {
+        return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(admins) }
+      }
+      if (event.httpMethod === 'POST') {
+        const body = event.body ? JSON.parse(event.body) : {}
+        const trimmed = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+        if (trimmed && !admins.includes(trimmed)) {
+          admins.push(trimmed)
+          await putR2Json(key, admins)
+        }
+        return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(admins) }
+      }
+      if (event.httpMethod === 'DELETE' && emailParam) {
+        const updated = admins.filter((e) => e.toLowerCase() !== emailParam)
+        await putR2Json(key, updated)
+        return { statusCode: 200, headers: jsonHeaders, body: JSON.stringify(updated) }
+      }
+    }
+
     // GET /api/albums
     if (event.httpMethod === 'GET' && path === '/api/albums') {
       const albums = (await getR2Json<Album[]>('catalog/albums.json')) || []

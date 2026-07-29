@@ -1,13 +1,17 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import {
+  addCustomAdminEmail,
   createAlbum,
   createPhotoSet,
   deleteAlbum,
   deletePhotoSet,
   listAlbums,
+  listCustomAdminEmails,
   listPhotoSets,
   movePhotoSet,
+  removeCustomAdminEmail,
   reorderPhotoSets,
+  resetMemoryCatalog,
   updateAlbum,
   updatePhotoSet,
 } from './catalogRepository'
@@ -332,6 +336,67 @@ describe('catalogRepository with API', () => {
       url: '/api/albums/alb-999',
       method: 'PUT',
       body: { name: 'API Updated Album', description: 'API Updated Description' },
+    })
+  })
+
+  test('manages custom admin emails in fallback mode', async () => {
+    resetMemoryCatalog()
+    const initial = await listCustomAdminEmails()
+    expect(initial).toEqual([])
+
+    const updated = await addCustomAdminEmail('  Admin@Test.Com  ')
+    expect(updated).toEqual(['admin@test.com'])
+
+    const list = await listCustomAdminEmails()
+    expect(list).toEqual(['admin@test.com'])
+
+    const afterRemove = await removeCustomAdminEmail('admin@test.com')
+    expect(afterRemove).toEqual([])
+  })
+
+  test('calls remote API endpoints for custom admin emails', async () => {
+    const requests: { url: string; method?: string; body?: any }[] = []
+    const globalFetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      requests.push({ url, method: options?.method, body: options?.body ? JSON.parse(options.body as string) : undefined })
+      if (url === '/api/admins' && !options?.method) {
+        return {
+          ok: true,
+          json: async () => ['user1@test.com'],
+        }
+      }
+      if (url === '/api/admins' && options?.method === 'POST') {
+        return {
+          ok: true,
+          json: async () => ['user1@test.com', 'user2@test.com'],
+        }
+      }
+      if (url.startsWith('/api/admins/') && options?.method === 'DELETE') {
+        return {
+          ok: true,
+          json: async () => ['user1@test.com'],
+        }
+      }
+      return { ok: false }
+    })
+    vi.stubGlobal('fetch', globalFetch)
+
+    const list = await listCustomAdminEmails()
+    expect(list).toEqual(['user1@test.com'])
+
+    const added = await addCustomAdminEmail('user2@test.com')
+    expect(added).toEqual(['user1@test.com', 'user2@test.com'])
+    expect(requests).toContainEqual({
+      url: '/api/admins',
+      method: 'POST',
+      body: { email: 'user2@test.com' },
+    })
+
+    const removed = await removeCustomAdminEmail('user2@test.com')
+    expect(removed).toEqual(['user1@test.com'])
+    expect(requests).toContainEqual({
+      url: '/api/admins/user2%40test.com',
+      method: 'DELETE',
+      body: undefined,
     })
   })
 })
