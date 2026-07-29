@@ -701,6 +701,12 @@ button:disabled { cursor: wait; opacity: 0.65; }
   background: rgba(0, 0, 0, 0.85);
 }
 
+.lightbox-images {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .lightbox-images .image-wrapper {
   position: relative;
   overflow: hidden;
