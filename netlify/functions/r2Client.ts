@@ -89,6 +89,20 @@ export async function deleteR2Objects(keys: string[]): Promise<void> {
   }
 }
 
+export async function generatePresignedGetUrl(key: string): Promise<string> {
+  const domain = getPublicDomain()
+  const cleanKey = key.replace(/^\/+/, '')
+  if (domain) {
+    return `${domain}/${cleanKey}`
+  }
+  const client = getR2Client()
+  const command = new GetObjectCommand({
+    Bucket: getBucketName(),
+    Key: cleanKey,
+  })
+  return getSignedUrl(client, command, { expiresIn: 3600 })
+}
+
 export async function generatePresignedPutUrl(key: string, contentType?: string): Promise<string> {
   const client = getR2Client()
   const command = new PutObjectCommand({

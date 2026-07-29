@@ -5,6 +5,7 @@ import {
   getR2Json,
   putR2Json,
   deleteR2Objects,
+  generatePresignedGetUrl,
   generatePresignedPutUrl,
   getPublicUrl,
 } from './r2Client'
@@ -46,29 +47,18 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
     if (event.httpMethod === 'GET' && imageMatch) {
       const key = imageMatch[1]
       try {
-        const client = getR2Client()
-        const command = new GetObjectCommand({
-          Bucket: getBucketName(),
-          Key: key,
-        })
-        const response = await client.send(command)
-        if (!response.Body) {
-          return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Not Found' }) }
-        }
-        const contentType = response.ContentType || 'image/png'
-        const byteArray = await response.Body.transformToByteArray()
-        const base64 = Buffer.from(byteArray).toString('base64')
+        const targetUrl = await generatePresignedGetUrl(key)
         return {
-          statusCode: 200,
+          statusCode: 302,
           headers: {
-            'Content-Type': contentType,
-            'Cache-Control': 'public, max-age=86400',
+            Location: targetUrl,
+            'Cache-Control': 'public, max-age=3600',
             'Access-Control-Allow-Origin': '*',
           },
-          body: base64,
-          isBase64Encoded: true,
+          body: '',
         }
-      } catch {
+      } catch (err) {
+        console.error('Failed to resolve image URL:', key, err)
         return { statusCode: 404, headers: jsonHeaders, body: JSON.stringify({ error: 'Image Not Found' }) }
       }
     }
