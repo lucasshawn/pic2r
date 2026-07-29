@@ -226,8 +226,8 @@ export async function handler(event: HandlerEvent, _context: any): Promise<Handl
         const payload: SavePhotoSetPayload = body.photoSet || body
         const beforeKey = payload.beforeKey || ''
         const afterKey = payload.afterKey || ''
-        const beforeUrl = payload.beforeUrl || (beforeKey ? getPublicUrl(beforeKey) : '')
-        const afterUrl = payload.afterUrl || (afterKey ? getPublicUrl(afterKey) : '')
+        const beforeUrl = payload.beforeUrl || (beforeKey ? (getPublicDomain() ? getPublicUrl(beforeKey) : `/api/image/${beforeKey}`) : '')
+        const afterUrl = payload.afterUrl || (afterKey ? (getPublicDomain() ? getPublicUrl(afterKey) : `/api/image/${afterKey}`) : '')
 
         if (!payload.name || (!beforeUrl && !beforeKey)) {
           return { statusCode: 400, headers: jsonHeaders, body: JSON.stringify({ error: 'Missing required photo set fields' }) }

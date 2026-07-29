@@ -33,7 +33,11 @@ export function getBucketName(): string {
 
 export function getPublicDomain(): string {
   const domain = process.env.R2_PUBLIC_DOMAIN || ''
-  return domain.replace(/\/+$/, '')
+  const clean = domain.replace(/\/+$/, '')
+  if (clean.includes('cloudflarestorage.com')) {
+    return ''
+  }
+  return clean
 }
 
 export function getPublicUrl(key: string): string {
